@@ -34,3 +34,34 @@ To run it on Android, you can drop this into any React environment (Vite, Create
 
 Pokemon tracker
 Code · JSX 
+
+Yes, it packaged up into a standalone HTML page would be great, but can you also add the option to export the data as a JSON file
+
+6 Apr
+
+Viewed a file, created a file, read a file
+Viewed a file, created a file, read a file
+Here's the standalone HTML file — just download it and open it in any browser on Android (Chrome works great). No installation needed!
+
+What's new vs the React version:
+
+💾 Backup & Restore panel (in the My Cards tab) with three buttons — Export JSON downloads a dated file like pokemon-collection-2026-04-06.json that includes his full card list plus a set-by-set completion summary. Import JSON merges a previously exported file back in (great for moving between devices). Clear Collection wipes everything with a confirmation prompt.
+
+The exported JSON looks like this:
+
+json
+{
+  "exported": "2026-04-06T...",
+  "totalCards": 42,
+  "setProgress": [
+    { "set": "Surging Sparks", "owned": 12, "total": 191, "percent": 6 }
+  ],
+  "cards": [ { "name": "Pikachu", "number": "67", ... } ]
+}
+I also snuck in a few other upgrades — Sun & Moon sets are now included, and clicking a set in the Sets tab jumps straight to Browse filtered to that set.
+
+
+Pokemon collector
+Code · HTML 
+
+
