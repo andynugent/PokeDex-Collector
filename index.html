@@ -178,6 +178,7 @@ input::placeholder,textarea::placeholder{color:#aaa}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -256,7 +257,7 @@ const COL_KEY  = "pokecollection_v2";
 const SETT_KEY = "pokesettings_v1";
 function loadCollection(){ try{return JSON.parse(localStorage.getItem(COL_KEY))||{};}catch{return{}} }
 function saveCollection(c){ localStorage.setItem(COL_KEY,JSON.stringify(c)); }
-function loadSettings(){ try{return{language:"English",currency:"$",apiKey:"",...JSON.parse(localStorage.getItem(SETT_KEY))||{}};}catch{return{language:"English",currency:"$",apiKey:""}} }
+function loadSettings(){ try{return{language:"English",currency:"$",...JSON.parse(localStorage.getItem(SETT_KEY))||{}};}catch{return{language:"English",currency:"$"}} }
 function saveSettings(s){ localStorage.setItem(SETT_KEY,JSON.stringify(s)); }
 
 // ── TCG API ───────────────────────────────────────────────────────────────────
@@ -298,22 +299,15 @@ async function fetchDexNumbers(cardIds){
   return results;
 }
 
-async function identifyCardImage(base64, apiKey){
-  const res=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-    body:JSON.stringify({
-      model:"claude-haiku-4-5-20251001",
-      max_tokens:200,
-      messages:[{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64}},
-        {type:"text",text:'Identify this Pokémon TCG card. Respond ONLY with JSON (no markdown): {"name":"pokemon name","setName":"set name","number":"card number","confidence":"high|medium|low"}. If unidentifiable set confidence to "low" and use empty strings.'}
-      ]}]
-    })
-  });
-  const d=await res.json();
-  const text=d.content?.[0]?.text||"{}";
-  return JSON.parse(text.replace(/```[a-z]*/g,"").replace(/```/g,"").trim());
+async function recogniseCardText(dataUrl){
+  const { data } = await Tesseract.recognize(dataUrl, 'eng', { logger: ()=>{} });
+  // Card name is on the first legible line (top of card)
+  const lines = data.lines
+    .map(l => ({ text: l.text.trim().replace(/[^a-zA-Z0-9\s'é-]/g,'').trim(), conf: l.confidence }))
+    .filter(l => l.text.length > 1 && l.conf > 35);
+  if (!lines.length) return { name:'', setName:'', number:'', confidence:'low' };
+  const { text: name, conf } = lines[0];
+  return { name, setName:'', number:'', confidence: conf > 65 ? 'high' : conf > 45 ? 'medium' : 'low' };
 }
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -471,18 +465,13 @@ function App(){
       const dataUrl=evt.target.result;
       setCamPreview(dataUrl);
       setCamResult(null);
-      if(settings.apiKey){
-        setCamLoading(true);
-        try{
-          const base64=dataUrl.split(",")[1];
-          const result=await identifyCardImage(base64,settings.apiKey);
-          setCamResult(result);
-          if(result.name && result.confidence!=="low"){
-            setSearchQuery(result.name);
-          }
-        }catch{ setCamResult({name:"",confidence:"low"}); }
-        setCamLoading(false);
-      }
+      setCamLoading(true);
+      try{
+        const result=await recogniseCardText(dataUrl);
+        setCamResult(result);
+        if(result.name && result.confidence!=="low") setSearchQuery(result.name);
+      }catch{ setCamResult({name:"",confidence:"low"}); }
+      setCamLoading(false);
     };
     reader.readAsDataURL(file);
     e.target.value="";
@@ -865,12 +854,11 @@ function App(){
         <div className="modal-title">📷 Scan Card</div>
         {!camPreview&&!camLoading&&<>
           <div style={{fontSize:13,color:"#ffffff88",lineHeight:1.6,marginBottom:14}}>
-            Take a photo of a Pokémon card to identify it.{" "}
-            {!settings.apiKey&&<span style={{color:"#FFD700"}}>Add an Anthropic API key in ⚙️ Settings to enable auto-identification.</span>}
+            Take a photo of a Pokémon card to automatically read the card name.
           </div>
           <button className="action-btn btn-gold" style={{width:"100%"}} onClick={()=>cameraRef.current.click()}>📷 Open Camera</button>
         </>}
-        {camLoading&&<div className="loading" style={{padding:20}}><Pokeball size={36} spinning/><div className="loading-text">Identifying card…</div></div>}
+        {camLoading&&<div className="loading" style={{padding:20}}><Pokeball size={36} spinning/><div className="loading-text">Reading card…</div></div>}
         {camPreview&&!camLoading&&<>
           <img src={camPreview} className="cam-preview" alt="Card scan"/>
           {camResult&&(camResult.confidence==="low"||!camResult.name
@@ -884,9 +872,6 @@ function App(){
               {camResult.setName&&<div style={{fontSize:11,color:"#ffffff77",marginTop:2}}>{camResult.setName} {camResult.number?`#${camResult.number}`:""}</div>}
             </div>
           )}
-          {!camResult&&!settings.apiKey&&<div style={{background:"#ffffff10",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:11,color:"#ffffff77"}}>
-            No API key set — search manually for this card.
-          </div>}
           <div className="btn-row">
             <button className="action-btn btn-ghost" onClick={()=>{setCamPreview(null);setCamResult(null);}}>🔄 Retake</button>
             <button className="action-btn btn-gold" onClick={()=>{
@@ -920,18 +905,6 @@ function App(){
           <select className="modal-select" value={settings.currency} onChange={e=>setSettings(s=>({...s,currency:e.target.value}))}>
             {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
           </select>
-        </div>
-
-        <div className="modal-section">📷 Camera Card ID</div>
-        <div className="modal-row">
-          <span className="modal-label">API Key</span>
-          <input className="modal-input" type="password" placeholder="sk-ant-…" value={settings.apiKey}
-            onChange={e=>setSettings(s=>({...s,apiKey:e.target.value}))}/>
-        </div>
-        <div className="modal-note">
-          Enter your Anthropic API key to enable automatic card identification from photos.
-          Your key is stored locally on this device only and never sent anywhere except Anthropic's API.
-          Get a key at console.anthropic.com.
         </div>
 
         <div className="modal-section">Data</div>
