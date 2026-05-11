@@ -171,6 +171,51 @@ input::placeholder,textarea::placeholder{color:#aaa}
 /* Chips */
 .count-chip{font-size:12px;color:#FFD700;font-weight:700;margin-bottom:11px}
 .dex-note{font-size:10px;color:#ffffff44;margin-top:14px;padding:9px 11px;background:#ffffff08;border-radius:9px;line-height:1.6}
+
+/* ── Desktop / landscape: sidebar navigation ── */
+@media (min-width:640px){
+  #app{max-width:none;box-shadow:none}
+
+  /* Fixed left sidebar — overrides mobile sticky positioning */
+  .tabbar,.tabbar.no-search{
+    position:fixed!important;
+    left:0;top:0!important;
+    width:180px;height:100vh;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    border-bottom:none;
+    border-right:1px solid #ffffff18;
+    background:linear-gradient(180deg,#12152a 0%,#0d1a3a 100%);
+    box-shadow:4px 0 24px #00000050;
+    padding-top:16px;
+    overflow-y:auto;
+    z-index:150; /* above header (100), below modals (200) */
+  }
+  .tab-btn{
+    border-bottom:none!important;
+    border-right:3px solid transparent;
+    padding:15px 20px;
+    font-size:13px;
+    text-align:left;
+  }
+  .tab-btn:hover{background:#ffffff10}
+  .tab-btn.active{border-right-color:#FFD700}
+
+  /* Push header and content past the sidebar */
+  .header{margin-left:180px}
+  .content{margin-left:180px;padding:20px 32px 60px}
+
+  /* More card columns on wider screens */
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+
+  /* Stats row instead of 2×2 grid */
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+
+  /* Centred modals instead of bottom sheets */
+  .modal-overlay{align-items:center}
+  .modal-sheet{border-radius:16px;max-width:480px;max-height:80vh}
+}
 </style>
 </head>
 <body>
