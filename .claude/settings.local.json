@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.cdnjs.com)",
+      "Bash(curl -sL \"https://unpkg.com/tesseract.js@5/dist/tesseract.min.js\")",
+      "Bash(openssl dgst *)",
+      "Bash(openssl base64 *)"
+    ]
+  }
+}
