@@ -302,9 +302,15 @@ async function fetchDexNumbers(cardIds){
 
 async function recogniseCardText(dataUrl){
   const { data } = await Tesseract.recognize(dataUrl, 'eng', { logger: ()=>{} });
-  // Extract HP from raw text before stripping — format is "HP 120" (top-right of card)
-  const hpMatch = data.text.match(/\bHP\s*(\d+)\b/i) || data.text.match(/\b(\d+)\s*HP\b/i);
-  const hp = hpMatch ? (hpMatch[1] || hpMatch[2]) : null;
+  // Extract HP from raw text — broaden char class to catch common OCR digit confusables
+  const hpMatch = data.text.match(/\bHP\s*([0-9OIlSBGZ]+)\b/i) || data.text.match(/\b([0-9OIlSBGZ]+)\s*HP\b/i);
+  let hp = null;
+  if (hpMatch) {
+    const corrected = (hpMatch[1]||hpMatch[2]).toUpperCase()
+      .replace(/O/g,'0').replace(/I/g,'1').replace(/L/g,'1')
+      .replace(/S/g,'5').replace(/B/g,'8').replace(/G/g,'6').replace(/Z/g,'2');
+    if (/^\d+$/.test(corrected)) hp = corrected;
+  }
   // Card name is on the first legible line (top of card)
   const lines = data.lines
     .map(l => ({ text: l.text.trim().replace(/[^a-zA-Z0-9\s'é-]/g,'').trim(), conf: l.confidence }))
