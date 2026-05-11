@@ -1,839 +1,958 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>PokéDex Collector</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Bangers&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Bangers&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; background: #111; }
-  body { font-family: 'Nunito', 'Trebuchet MS', sans-serif; color: #fff; overscroll-behavior: none; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#111}
+body{font-family:'Nunito','Trebuchet MS',sans-serif;color:#fff;overscroll-behavior:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:translateX(-50%) scale(0.8);opacity:0}60%{transform:translateX(-50%) scale(1.08)}100%{transform:translateX(-50%) scale(1);opacity:1}}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#ffffff30;border-radius:4px}
+input,select,button,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#aaa}
+#app{min-height:100vh;max-width:480px;margin:0 auto;background:linear-gradient(160deg,#1a1a2e 0%,#16213e 55%,#0f3460 100%);position:relative;box-shadow:0 0 60px #00000090}
 
-  @keyframes spin    { to { transform: rotate(360deg); } }
-  @keyframes pop     { 0%{transform:translateX(-50%) scale(0.8);opacity:0} 60%{transform:translateX(-50%) scale(1.08)} 100%{transform:translateX(-50%) scale(1);opacity:1} }
-  @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+/* Header */
+.header{background:linear-gradient(135deg,#FF4444,#FF8800);padding:14px 16px 12px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px #FF444455}
+.header-row{display:flex;align-items:center;gap:8px}
+.header-title{font-family:'Bangers',cursive;font-size:24px;letter-spacing:2px;line-height:1;flex:1}
+.header-sub{font-size:10px;opacity:.85;font-weight:700;margin-top:1px}
+.header-btn{width:34px;height:34px;border-radius:10px;border:none;background:#ffffff25;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s;flex-shrink:0}
+.header-btn:hover{background:#ffffff40}
+.search-row{display:flex;gap:8px;margin-top:10px}
+.search-wrap{flex:1;position:relative}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+.search-input{width:100%;padding:9px 12px 9px 30px;border-radius:12px;border:none;font-size:14px;background:#ffffff22;color:white;outline:none;backdrop-filter:blur(8px)}
+.set-select{padding:8px 10px;border-radius:12px;border:none;font-size:11px;background:#ffffff22;color:white;outline:none;max-width:108px;backdrop-filter:blur(8px)}
+.set-select option{background:#222}
 
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: #ffffff30; border-radius: 4px; }
-  input, select, button { font-family: inherit; }
-  input::placeholder { color: #aaa; }
+/* Tabbar */
+.tabbar{display:flex;background:#00000040;border-bottom:1px solid #ffffff15;position:sticky;top:104px;z-index:99}
+.tabbar.no-search{top:68px}
+.tab-btn{flex:1;padding:10px 2px;border:none;background:transparent;color:#ffffff88;cursor:pointer;font-weight:900;font-size:11px;border-bottom:3px solid transparent;transition:all .2s}
+.tab-btn.active{color:#FFD700;border-bottom-color:#FFD700}
 
-  #app {
-    min-height: 100vh; max-width: 480px; margin: 0 auto;
-    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%);
-    position: relative; box-shadow: 0 0 60px #00000090;
-  }
+/* Content */
+.content{padding:14px 14px 100px;animation:slideUp .3s ease}
 
-  .header {
-    background: linear-gradient(135deg, #FF4444, #FF8800);
-    padding: 18px 16px 14px; position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 4px 20px #FF444455;
-  }
-  .header-row { display: flex; align-items: center; gap: 10px; }
-  .header-title { font-family: 'Bangers', cursive; font-size: 26px; letter-spacing: 2px; line-height: 1; }
-  .header-sub { font-size: 11px; opacity: .85; font-weight: 700; margin-top: 2px; }
-  .search-row { display: flex; gap: 8px; margin-top: 12px; }
-  .search-wrap { flex: 1; position: relative; }
-  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
-  .search-input {
-    width: 100%; padding: 10px 12px 10px 32px; border-radius: 12px; border: none;
-    font-size: 14px; background: #ffffff22; color: white; outline: none; backdrop-filter: blur(8px);
-  }
-  .set-select {
-    padding: 8px 10px; border-radius: 12px; border: none; font-size: 11px;
-    background: #ffffff22; color: white; outline: none; max-width: 110px; backdrop-filter: blur(8px);
-  }
-  .set-select option { background: #222; }
+/* Card grid */
+.card-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.card-tile{position:relative;cursor:pointer;border-radius:11px;overflow:hidden;border:3px solid #DDD;background:#F5F5F5;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 6px #00000020}
+.card-tile.owned{border-color:#FFD700;background:#FFFBEA;box-shadow:0 4px 16px #FFD70066}
+.card-tile:hover{transform:translateY(-3px) scale(1.02)}
+.card-tile img{width:100%;display:block}
+.card-tile-no-img{height:110px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#AAA;padding:6px;text-align:center}
+.card-info{padding:5px 7px;background:white}
+.card-name{font-size:10px;font-weight:700;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-sub{font-size:9px;color:#888}
+.owned-badge{position:absolute;top:5px;right:5px;background:#FFD700;color:#222;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;box-shadow:0 2px 6px #00000040}
+.price-btn{position:absolute;bottom:30px;right:5px;background:#00000066;color:white;border:none;border-radius:6px;font-size:10px;padding:2px 5px;cursor:pointer}
+.price-btn:hover{background:#00000099}
 
-  .tabbar {
-    display: flex; background: #00000040; border-bottom: 1px solid #ffffff15;
-    position: sticky; top: 108px; z-index: 99;
-  }
-  .tabbar.no-search { top: 72px; }
-  .tab-btn {
-    flex: 1; padding: 11px 2px; border: none; background: transparent;
-    color: #ffffff88; cursor: pointer; font-weight: 900; font-size: 11px;
-    border-bottom: 3px solid transparent; transition: all .2s; line-height: 1.2;
-  }
-  .tab-btn.active { color: #FFD700; border-bottom-color: #FFD700; }
+/* Progress */
+.progress-wrap{margin-top:4px}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#aaa;margin-bottom:3px}
+.progress-track{height:8px;background:#ffffff20;border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s ease}
 
-  .content { padding: 16px 16px 100px; animation: slideUp .3s ease; }
+/* Set / gen cards */
+.set-card{background:#ffffff0d;border-radius:14px;padding:12px 14px;margin-bottom:9px;cursor:pointer;border:1px solid #ffffff15;transition:all .2s}
+.set-card:hover{background:#ffffff18}
+.set-card-header{display:flex;justify-content:space-between;align-items:flex-start}
+.set-name{font-weight:900;font-size:14px}
+.set-sub{font-size:10px;color:#ffffff77;margin-top:2px}
 
-  .card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .card-tile {
-    position: relative; cursor: pointer; border-radius: 12px; overflow: hidden;
-    border: 3px solid #DDD; background: #F5F5F5;
-    transition: transform .15s, box-shadow .15s; box-shadow: 0 2px 6px #00000020;
-  }
-  .card-tile.owned { border-color: #FFD700; background: #FFFBEA; box-shadow: 0 4px 16px #FFD70066; }
-  .card-tile:hover { transform: translateY(-4px) scale(1.03); }
-  .card-tile img { width: 100%; display: block; }
-  .card-tile-no-img {
-    height: 120px; display: flex; align-items: center; justify-content: center;
-    font-size: 11px; color: #AAA; padding: 8px; text-align: center;
-  }
-  .card-info { padding: 6px 8px; background: white; }
-  .card-name { font-size: 11px; font-weight: 700; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card-sub { font-size: 10px; color: #888; }
-  .owned-badge {
-    position: absolute; top: 6px; right: 6px; background: #FFD700; color: #222;
-    border-radius: 99px; width: 22px; height: 22px; display: flex; align-items: center;
-    justify-content: center; font-size: 11px; font-weight: 900; box-shadow: 0 2px 6px #00000040;
-  }
+/* Gen card */
+.gen-card{background:#ffffff0d;border-radius:14px;padding:12px 14px;margin-bottom:9px;border:1px solid #ffffff15;transition:border-color .3s}
+.gen-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gen-badge{width:50px;height:50px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.gen-badge-label{font-size:9px;font-weight:900;letter-spacing:1px;line-height:1;margin-bottom:1px}
+.gen-badge-roman{font-family:'Bangers',cursive;font-size:21px;line-height:1}
+.gen-info{flex:1;min-width:0}
+.gen-title{font-weight:900;font-size:14px}
+.gen-meta{font-size:10px;color:#ffffff66;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gen-chips{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.gen-chip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;background:#ffffff15;color:#ffffffcc}
 
-  .progress-wrap { margin-top: 4px; }
-  .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; margin-bottom: 3px; }
-  .progress-track { height: 8px; background: #ffffff20; border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+/* Year card */
+.year-card{background:#ffffff0d;border-radius:14px;padding:12px 14px;margin-bottom:9px;border:1px solid #ffffff15}
+.year-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.year-num{font-family:'Bangers',cursive;font-size:22px;letter-spacing:1px}
 
-  .set-card {
-    background: #ffffff0d; border-radius: 16px; padding: 14px 16px;
-    margin-bottom: 10px; cursor: pointer; border: 1px solid #ffffff15; transition: all .2s;
-  }
-  .set-card:hover { background: #ffffff18; }
-  .set-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-  .set-name { font-weight: 900; font-size: 15px; }
-  .set-sub { font-size: 11px; color: #ffffff77; margin-top: 2px; }
+/* Series pills */
+.series-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:8px;margin-bottom:14px;scrollbar-width:none}
+.series-row::-webkit-scrollbar{display:none}
+.series-pill{white-space:nowrap;padding:6px 12px;border-radius:99px;border:none;cursor:pointer;font-weight:900;font-size:11px;background:#ffffff15;color:white;transition:all .2s}
 
-  .gen-card {
-    background: #ffffff0d; border-radius: 16px; padding: 14px 16px;
-    margin-bottom: 10px; border: 1px solid #ffffff15; transition: border-color .3s;
-  }
-  .gen-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .gen-badge {
-    width: 52px; height: 52px; border-radius: 12px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .gen-badge-label { font-size: 9px; font-weight: 900; letter-spacing: 1px; line-height: 1; margin-bottom: 1px; }
-  .gen-badge-roman { font-family: 'Bangers', cursive; font-size: 22px; line-height: 1; }
-  .gen-info { flex: 1; min-width: 0; }
-  .gen-title { font-weight: 900; font-size: 15px; }
-  .gen-meta { font-size: 10px; color: #ffffff66; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .gen-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .gen-chip {
-    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 99px;
-    background: #ffffff15; color: #ffffffcc;
-  }
+/* View toggle */
+.view-toggle{display:flex;gap:0;margin-bottom:14px;background:#ffffff10;border-radius:10px;padding:3px}
+.view-toggle-btn{flex:1;padding:7px;border:none;background:transparent;color:#ffffff88;cursor:pointer;font-weight:900;font-size:12px;border-radius:8px;transition:all .2s}
+.view-toggle-btn.active{background:#FFD700;color:#222}
 
-  .series-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; scrollbar-width: none; }
-  .series-row::-webkit-scrollbar { display: none; }
-  .series-pill {
-    white-space: nowrap; padding: 6px 14px; border-radius: 99px; border: none;
-    cursor: pointer; font-weight: 900; font-size: 12px; background: #ffffff15; color: white; transition: all .2s;
-  }
+/* Stats box */
+.stats-box{margin-top:18px;background:linear-gradient(135deg,#FFD700,#FF8800);border-radius:14px;padding:14px 18px;color:#222}
+.stats-title{font-family:'Bangers',cursive;font-size:20px;letter-spacing:1px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.stat-item{background:#00000015;border-radius:9px;padding:9px 11px}
+.stat-val{font-weight:900;font-size:20px}
+.stat-label{font-size:10px;font-weight:700;opacity:.75}
 
-  .stats-box {
-    margin-top: 20px; background: linear-gradient(135deg, #FFD700, #FF8800);
-    border-radius: 16px; padding: 16px 20px; color: #222;
-  }
-  .stats-title { font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 1px; }
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-  .stat-item { background: #00000015; border-radius: 10px; padding: 10px 12px; }
-  .stat-val { font-weight: 900; font-size: 22px; }
-  .stat-label { font-size: 11px; font-weight: 700; opacity: .75; }
+/* My cards */
+.set-group{margin-bottom:22px}
+.set-group-header{display:flex;align-items:center;gap:8px;margin-bottom:9px;padding-left:10px}
+.mini-card{background:#ffffff10;border-radius:9px;padding:9px;cursor:pointer;border:1px solid #FFD70033;text-align:center;transition:all .15s}
+.mini-card:hover{background:#FF444422}
+.mini-name{font-size:10px;font-weight:900;line-height:1.2}
+.mini-num{font-size:9px;color:#ffffff77;margin-top:2px}
+.mini-rar{font-size:8px;color:#FFD700;margin-top:1px}
+.mini-price{font-size:9px;color:#44FF88;margin-top:2px;font-weight:700}
+.mini-rem{font-size:8px;color:#FF6666;margin-top:5px;font-weight:700}
 
-  .set-group { margin-bottom: 24px; }
-  .set-group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-left: 10px; }
-  .mini-card {
-    background: #ffffff10; border-radius: 10px; padding: 10px;
-    cursor: pointer; border: 1px solid #FFD70033; text-align: center; transition: all .15s;
-  }
-  .mini-card:hover { background: #FF444422; }
-  .mini-name { font-size: 11px; font-weight: 900; line-height: 1.2; }
-  .mini-num  { font-size: 10px; color: #ffffff77; margin-top: 3px; }
-  .mini-rar  { font-size: 9px; color: #FFD700; margin-top: 2px; }
-  .mini-dex  { font-size: 9px; color: #ffffff33; margin-top: 2px; }
-  .mini-rem  { font-size: 9px; color: #FF6666; margin-top: 6px; font-weight: 700; }
+/* Empty / loading */
+.empty{text-align:center;padding:60px 20px;opacity:.5}
+.empty-icon{font-size:52px}
+.empty-title{font-weight:900;font-size:17px;margin-top:8px}
+.empty-sub{font-size:12px;margin-top:4px}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px;gap:12px}
+.loading-text{opacity:.7;font-weight:700}
 
-  .empty { text-align: center; padding: 60px 20px; opacity: .5; }
-  .empty-icon { font-size: 56px; }
-  .empty-title { font-weight: 900; font-size: 18px; margin-top: 8px; }
-  .empty-sub { font-size: 13px; margin-top: 4px; }
+/* Toast */
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);border-radius:99px;padding:9px 18px;font-weight:900;font-size:13px;box-shadow:0 4px 20px #00000060;z-index:999;animation:pop .3s ease;white-space:nowrap;color:#222;pointer-events:none}
 
-  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px; gap: 12px; }
-  .loading-text { opacity: .7; font-weight: 700; }
+/* Modal overlay */
+.modal-overlay{position:fixed;inset:0;background:#000000bb;z-index:200;display:flex;align-items:flex-end;animation:fadeIn .2s ease}
+.modal-sheet{background:linear-gradient(160deg,#1e2440,#0f2050);border-radius:20px 20px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;margin:0 auto;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Bangers',cursive;font-size:22px;letter-spacing:1px;margin-bottom:14px}
+.modal-subtitle{font-size:12px;color:#ffffff66;margin-bottom:16px;margin-top:-10px}
+.modal-row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.modal-label{font-size:12px;font-weight:700;color:#FFD700;min-width:80px}
+.modal-input{flex:1;padding:9px 12px;border-radius:10px;border:1px solid #ffffff20;background:#ffffff10;color:white;font-size:14px;outline:none}
+.modal-input:focus{border-color:#FFD70088}
+.modal-select{flex:1;padding:9px 12px;border-radius:10px;border:1px solid #ffffff20;background:#1e2440;color:white;font-size:13px;outline:none}
+.modal-select option{background:#1e2440}
+.modal-section{font-size:11px;font-weight:900;color:#FFD700;letter-spacing:1px;margin:16px 0 8px;text-transform:uppercase}
+.modal-note{font-size:10px;color:#ffffff44;line-height:1.5;margin-top:6px}
+.modal-close{position:absolute;top:16px;right:16px;background:#ffffff20;border:none;color:white;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:14px}
 
-  .toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-    border-radius: 99px; padding: 10px 20px; font-weight: 900; font-size: 14px;
-    box-shadow: 0 4px 20px #00000060; z-index: 999; animation: pop .3s ease;
-    white-space: nowrap; color: #222; pointer-events: none;
-  }
+/* Buttons */
+.btn-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.action-btn{flex:1;min-width:100px;padding:11px 12px;border-radius:11px;border:none;font-weight:900;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-gold{background:linear-gradient(135deg,#FFD700,#FF8800);color:#222}
+.btn-gold:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn-ghost{background:#ffffff15;color:white}
+.btn-ghost:hover{background:#ffffff25;transform:translateY(-1px)}
+.btn-danger{background:#FF444422;color:#FF6666;border:1px solid #FF444444}
+.btn-danger:hover{background:#FF444444}
 
-  .export-panel {
-    background: #ffffff0d; border-radius: 16px; padding: 16px;
-    border: 1px solid #ffffff15; margin-bottom: 16px;
-  }
-  .export-title { font-weight: 900; font-size: 14px; margin-bottom: 12px; color: #FFD700; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .action-btn {
-    flex: 1; min-width: 120px; padding: 11px 14px; border-radius: 12px; border: none;
-    font-weight: 900; font-size: 13px; cursor: pointer; transition: all .15s;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .btn-export { background: linear-gradient(135deg, #FFD700, #FF8800); color: #222; }
-  .btn-export:hover { filter: brightness(1.08); transform: translateY(-1px); }
-  .btn-import { background: #ffffff15; color: white; }
-  .btn-import:hover { background: #ffffff25; transform: translateY(-1px); }
-  .btn-danger { background: #FF444422; color: #FF6666; border: 1px solid #FF444444; }
-  .btn-danger:hover { background: #FF444444; }
+/* Price display */
+.price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.price-cell{background:#ffffff10;border-radius:10px;padding:8px;text-align:center}
+.price-cell-label{font-size:9px;color:#ffffff66;text-transform:uppercase;letter-spacing:.5px}
+.price-cell-val{font-size:16px;font-weight:900;color:#FFD700;margin-top:3px}
+.price-source{font-size:10px;color:#ffffff44;margin-top:8px}
 
-  .count-chip { font-size: 12px; color: #FFD700; font-weight: 700; margin-bottom: 12px; }
-  .dex-note {
-    font-size: 10px; color: #ffffff44; margin-top: 16px; padding: 10px 12px;
-    background: #ffffff08; border-radius: 10px; line-height: 1.6;
-  }
+/* Camera preview */
+.cam-preview{width:100%;border-radius:12px;margin-bottom:12px;max-height:200px;object-fit:cover}
+.cam-result{background:#44FF8820;border:1px solid #44FF8855;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.cam-result-title{font-size:12px;color:#44FF88;font-weight:900}
+.cam-result-val{font-size:15px;font-weight:700;margin-top:3px}
+
+/* Migration banner */
+.mig-banner{display:flex;align-items:center;gap:10px;background:#FFD70018;border:1px solid #FFD70055;border-radius:11px;padding:9px 12px;margin-bottom:14px}
+
+/* Chips */
+.count-chip{font-size:12px;color:#FFD700;font-weight:700;margin-bottom:11px}
+.dex-note{font-size:10px;color:#ffffff44;margin-top:14px;padding:9px 11px;background:#ffffff08;border-radius:9px;line-height:1.6}
 </style>
 </head>
 <body>
 <div id="app"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
-// ── Generation data — source: wikipedia.org/wiki/List_of_Pokémon ──────────────
-// Counts from Wikipedia: I=151, II=100, III=135, IV=107, V=156, VI=72, VII=88, VIII=96, IX=120
+// ── Generations (source: wikipedia.org/wiki/List_of_Pokémon) ─────────────────
 const GENERATIONS = [
-  { num:1, roman:"I",    region:"Kanto",  range:[1,151],    total:151, games:"Red, Blue & Yellow",        years:"1996–1999", color:"#FF4444" },
-  { num:2, roman:"II",   region:"Johto",  range:[152,251],  total:100, games:"Gold, Silver & Crystal",    years:"1999–2002", color:"#FF8C00" },
-  { num:3, roman:"III",  region:"Hoenn",  range:[252,386],  total:135, games:"Ruby, Sapphire & Emerald",  years:"2002–2006", color:"#33BB55" },
-  { num:4, roman:"IV",   region:"Sinnoh", range:[387,493],  total:107, games:"Diamond, Pearl & Platinum", years:"2006–2010", color:"#5B8AFF" },
-  { num:5, roman:"V",    region:"Unova",  range:[494,649],  total:156, games:"Black & White",             years:"2010–2013", color:"#AAAAAA" },
-  { num:6, roman:"VI",   region:"Kalos",  range:[650,721],  total:72,  games:"X & Y",                    years:"2013–2016", color:"#00BBCC" },
-  { num:7, roman:"VII",  region:"Alola",  range:[722,809],  total:88,  games:"Sun, Moon & Ultra",         years:"2016–2019", color:"#FF9500" },
-  { num:8, roman:"VIII", region:"Galar",  range:[810,905],  total:96,  games:"Sword & Shield",            years:"2019–2022", color:"#9955FF" },
-  { num:9, roman:"IX",   region:"Paldea", range:[906,1025], total:120, games:"Scarlet & Violet",          years:"2022–2027", color:"#FF4488" },
+  { num:1,roman:"I",   region:"Kanto", range:[1,151],   total:151,games:"Red, Blue & Yellow",       years:"1996–1999",color:"#FF4444"},
+  { num:2,roman:"II",  region:"Johto", range:[152,251], total:100,games:"Gold, Silver & Crystal",   years:"1999–2002",color:"#FF8C00"},
+  { num:3,roman:"III", region:"Hoenn", range:[252,386], total:135,games:"Ruby, Sapphire & Emerald", years:"2002–2006",color:"#33BB55"},
+  { num:4,roman:"IV",  region:"Sinnoh",range:[387,493], total:107,games:"Diamond, Pearl & Platinum",years:"2006–2010",color:"#5B8AFF"},
+  { num:5,roman:"V",   region:"Unova", range:[494,649], total:156,games:"Black & White",            years:"2010–2013",color:"#AAAAAA"},
+  { num:6,roman:"VI",  region:"Kalos", range:[650,721], total:72, games:"X & Y",                   years:"2013–2016",color:"#00BBCC"},
+  { num:7,roman:"VII", region:"Alola", range:[722,809], total:88, games:"Sun, Moon & Ultra",        years:"2016–2019",color:"#FF9500"},
+  { num:8,roman:"VIII",region:"Galar", range:[810,905], total:96, games:"Sword & Shield",           years:"2019–2022",color:"#9955FF"},
+  { num:9,roman:"IX",  region:"Paldea",range:[906,1025],total:120,games:"Scarlet & Violet",         years:"2022–2027",color:"#FF4488"},
 ];
+function getGeneration(n){ return n ? GENERATIONS.find(g=>n>=g.range[0]&&n<=g.range[1])||null : null; }
 
-function getGeneration(dexNum) {
-  if (!dexNum) return null;
-  return GENERATIONS.find(g => dexNum >= g.range[0] && dexNum <= g.range[1]) || null;
-}
-
-// ── TCG Set data ──────────────────────────────────────────────────────────────
+// ── TCG Sets (with release year) ─────────────────────────────────────────────
 const SETS = [
-  { id:"sv9",       name:"Journey Together",       total:190, series:"Scarlet & Violet" },
-  { id:"sv8pt5",    name:"Prismatic Evolutions",   total:147, series:"Scarlet & Violet" },
-  { id:"sv8",       name:"Surging Sparks",          total:191, series:"Scarlet & Violet" },
-  { id:"sv7",       name:"Stellar Crown",           total:175, series:"Scarlet & Violet" },
-  { id:"sv6pt5",    name:"Shrouded Fable",          total:99,  series:"Scarlet & Violet" },
-  { id:"sv6",       name:"Twilight Masquerade",     total:167, series:"Scarlet & Violet" },
-  { id:"sv5",       name:"Temporal Forces",         total:162, series:"Scarlet & Violet" },
-  { id:"sv4pt5",    name:"Paldean Fates",           total:245, series:"Scarlet & Violet" },
-  { id:"sv4",       name:"Paradox Rift",            total:182, series:"Scarlet & Violet" },
-  { id:"sv3pt5",    name:"151",                     total:207, series:"Scarlet & Violet" },
-  { id:"sv3",       name:"Obsidian Flames",         total:197, series:"Scarlet & Violet" },
-  { id:"sv2",       name:"Paldea Evolved",          total:193, series:"Scarlet & Violet" },
-  { id:"sv1",       name:"Scarlet & Violet Base",   total:198, series:"Scarlet & Violet" },
-  { id:"swsh12pt5", name:"Crown Zenith",            total:159, series:"Sword & Shield"  },
-  { id:"swsh12",    name:"Silver Tempest",          total:195, series:"Sword & Shield"  },
-  { id:"swsh11",    name:"Lost Origin",             total:196, series:"Sword & Shield"  },
-  { id:"swsh10",    name:"Astral Radiance",         total:189, series:"Sword & Shield"  },
-  { id:"cel25",     name:"Celebrations",            total:50,  series:"Sword & Shield"  },
-  { id:"swsh9",     name:"Brilliant Stars",         total:172, series:"Sword & Shield"  },
-  { id:"swsh8",     name:"Fusion Strike",           total:264, series:"Sword & Shield"  },
-  { id:"swsh7",     name:"Evolving Skies",          total:203, series:"Sword & Shield"  },
-  { id:"swsh6",     name:"Chilling Reign",          total:198, series:"Sword & Shield"  },
-  { id:"swsh5",     name:"Battle Styles",           total:163, series:"Sword & Shield"  },
-  { id:"swsh4",     name:"Vivid Voltage",           total:185, series:"Sword & Shield"  },
-  { id:"swsh3",     name:"Darkness Ablaze",         total:185, series:"Sword & Shield"  },
-  { id:"swsh2",     name:"Rebel Clash",             total:192, series:"Sword & Shield"  },
-  { id:"swsh1",     name:"Sword & Shield Base",     total:202, series:"Sword & Shield"  },
-  { id:"sm12",      name:"Cosmic Eclipse",          total:236, series:"Sun & Moon"      },
-  { id:"sm11",      name:"Unified Minds",           total:236, series:"Sun & Moon"      },
-  { id:"sm10",      name:"Unbroken Bonds",          total:214, series:"Sun & Moon"      },
-  { id:"sm9",       name:"Team Up",                 total:181, series:"Sun & Moon"      },
-  { id:"sm8",       name:"Lost Thunder",            total:214, series:"Sun & Moon"      },
-  { id:"sm7",       name:"Celestial Storm",         total:168, series:"Sun & Moon"      },
-  { id:"sm6",       name:"Forbidden Light",         total:131, series:"Sun & Moon"      },
-  { id:"sm5",       name:"Ultra Prism",             total:156, series:"Sun & Moon"      },
-  { id:"sm4",       name:"Crimson Invasion",        total:111, series:"Sun & Moon"      },
-  { id:"sm3",       name:"Burning Shadows",         total:147, series:"Sun & Moon"      },
-  { id:"sm2",       name:"Guardians Rising",        total:145, series:"Sun & Moon"      },
-  { id:"sm1",       name:"Sun & Moon Base",         total:149, series:"Sun & Moon"      },
+  {id:"sv9",      name:"Journey Together",      total:190,series:"Scarlet & Violet",year:2025},
+  {id:"sv8pt5",   name:"Prismatic Evolutions",  total:147,series:"Scarlet & Violet",year:2025},
+  {id:"sv8",      name:"Surging Sparks",         total:191,series:"Scarlet & Violet",year:2024},
+  {id:"sv7",      name:"Stellar Crown",          total:175,series:"Scarlet & Violet",year:2024},
+  {id:"sv6pt5",   name:"Shrouded Fable",         total:99, series:"Scarlet & Violet",year:2024},
+  {id:"sv6",      name:"Twilight Masquerade",    total:167,series:"Scarlet & Violet",year:2024},
+  {id:"sv5",      name:"Temporal Forces",        total:162,series:"Scarlet & Violet",year:2024},
+  {id:"sv4pt5",   name:"Paldean Fates",          total:245,series:"Scarlet & Violet",year:2024},
+  {id:"sv4",      name:"Paradox Rift",           total:182,series:"Scarlet & Violet",year:2023},
+  {id:"sv3pt5",   name:"151",                    total:207,series:"Scarlet & Violet",year:2023},
+  {id:"sv3",      name:"Obsidian Flames",        total:197,series:"Scarlet & Violet",year:2023},
+  {id:"sv2",      name:"Paldea Evolved",         total:193,series:"Scarlet & Violet",year:2023},
+  {id:"sv1",      name:"Scarlet & Violet Base",  total:198,series:"Scarlet & Violet",year:2023},
+  {id:"swsh12pt5",name:"Crown Zenith",           total:159,series:"Sword & Shield",  year:2023},
+  {id:"swsh12",   name:"Silver Tempest",         total:195,series:"Sword & Shield",  year:2022},
+  {id:"swsh11",   name:"Lost Origin",            total:196,series:"Sword & Shield",  year:2022},
+  {id:"swsh10",   name:"Astral Radiance",        total:189,series:"Sword & Shield",  year:2022},
+  {id:"swsh9",    name:"Brilliant Stars",        total:172,series:"Sword & Shield",  year:2022},
+  {id:"cel25",    name:"Celebrations",           total:50, series:"Sword & Shield",  year:2021},
+  {id:"swsh8",    name:"Fusion Strike",          total:264,series:"Sword & Shield",  year:2021},
+  {id:"swsh7",    name:"Evolving Skies",         total:203,series:"Sword & Shield",  year:2021},
+  {id:"swsh6",    name:"Chilling Reign",         total:198,series:"Sword & Shield",  year:2021},
+  {id:"swsh5",    name:"Battle Styles",          total:163,series:"Sword & Shield",  year:2021},
+  {id:"swsh4",    name:"Vivid Voltage",          total:185,series:"Sword & Shield",  year:2020},
+  {id:"swsh3",    name:"Darkness Ablaze",        total:185,series:"Sword & Shield",  year:2020},
+  {id:"swsh2",    name:"Rebel Clash",            total:192,series:"Sword & Shield",  year:2020},
+  {id:"swsh1",    name:"Sword & Shield Base",    total:202,series:"Sword & Shield",  year:2020},
+  {id:"sm12",     name:"Cosmic Eclipse",         total:236,series:"Sun & Moon",      year:2019},
+  {id:"sm11",     name:"Unified Minds",          total:236,series:"Sun & Moon",      year:2019},
+  {id:"sm10",     name:"Unbroken Bonds",         total:214,series:"Sun & Moon",      year:2019},
+  {id:"sm9",      name:"Team Up",                total:181,series:"Sun & Moon",      year:2019},
+  {id:"sm8",      name:"Lost Thunder",           total:214,series:"Sun & Moon",      year:2018},
+  {id:"sm7",      name:"Celestial Storm",        total:168,series:"Sun & Moon",      year:2018},
+  {id:"sm6",      name:"Forbidden Light",        total:131,series:"Sun & Moon",      year:2018},
+  {id:"sm5",      name:"Ultra Prism",            total:156,series:"Sun & Moon",      year:2018},
+  {id:"sm4",      name:"Crimson Invasion",       total:111,series:"Sun & Moon",      year:2017},
+  {id:"sm3",      name:"Burning Shadows",        total:147,series:"Sun & Moon",      year:2017},
+  {id:"sm2",      name:"Guardians Rising",       total:145,series:"Sun & Moon",      year:2017},
+  {id:"sm1",      name:"Sun & Moon Base",        total:149,series:"Sun & Moon",      year:2017},
 ];
 
 const SERIES_COLORS = {
-  "Scarlet & Violet": { bg:"#FF4444", accent:"#FF8800" },
-  "Sword & Shield":   { bg:"#5B8AFF", accent:"#00C8FF" },
-  "Sun & Moon":       { bg:"#FF9500", accent:"#FFD700" },
-  "XY":               { bg:"#22BB66", accent:"#00FFAA" },
+  "Scarlet & Violet":{bg:"#FF4444",accent:"#FF8800"},
+  "Sword & Shield"  :{bg:"#5B8AFF",accent:"#00C8FF"},
+  "Sun & Moon"      :{bg:"#FF9500",accent:"#FFD700"},
+  "XY"              :{bg:"#22BB66",accent:"#00FFAA"},
 };
 
-// ── LocalStorage ──────────────────────────────────────────────────────────────
-const STORAGE_KEY = "pokecollection_v2";
-function loadCollection() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
-}
-function saveCollection(col) { localStorage.setItem(STORAGE_KEY, JSON.stringify(col)); }
+const LANGUAGES = [
+  "English","Japanese","French","German","Spanish","Italian",
+  "Portuguese","Korean","Traditional Chinese","Simplified Chinese"
+];
+const CURRENCIES = ["$","£","€","¥","A$","C$"];
 
-// ── Pokémon TCG API ───────────────────────────────────────────────────────────
-async function searchCards(query, setId = "") {
-  const q = [];
-  if (query) q.push(`name:"${query}*"`);
-  if (setId)  q.push(`set.id:${setId}`);
-  const params = new URLSearchParams({
-    q: q.join(" ") || "name:*",
-    pageSize: "30",
-    // nationalPokedexNumbers lets us map cards to their generation
-    select: "id,name,number,set,rarity,images,supertype,subtypes,nationalPokedexNumbers",
-    orderBy: "number",
+// ── Storage ───────────────────────────────────────────────────────────────────
+const COL_KEY  = "pokecollection_v2";
+const SETT_KEY = "pokesettings_v1";
+function loadCollection(){ try{return JSON.parse(localStorage.getItem(COL_KEY))||{};}catch{return{}} }
+function saveCollection(c){ localStorage.setItem(COL_KEY,JSON.stringify(c)); }
+function loadSettings(){ try{return{language:"English",currency:"$",apiKey:"",...JSON.parse(localStorage.getItem(SETT_KEY))||{}};}catch{return{language:"English",currency:"$",apiKey:""}} }
+function saveSettings(s){ localStorage.setItem(SETT_KEY,JSON.stringify(s)); }
+
+// ── TCG API ───────────────────────────────────────────────────────────────────
+async function searchCards(query, setId, language){
+  const q=[];
+  if(query) q.push(`name:"${query}*"`);
+  if(setId) q.push(`set.id:${setId}`);
+  // Note: pokemontcg.io does not support set.language as a card query field.
+  // Non-English sets have their own set IDs, so language filtering works via
+  // the sets list. We only add a language hint when explicitly non-English.
+  if(language && language!=="English") q.push(`set.language:"${language}"`);
+  const params=new URLSearchParams({
+    q: q.join(" ")||"name:*",
+    pageSize:"30",
+    select:"id,name,number,set,rarity,images,supertype,subtypes,nationalPokedexNumbers",
+    orderBy:"number",
   });
-  const res  = await fetch(`https://api.pokemontcg.io/v2/cards?${params}`);
-  const data = await res.json();
-  return data.data || [];
+  const res=await fetch(`https://api.pokemontcg.io/v2/cards?${params}`);
+  return (await res.json()).data||[];
 }
 
-// ── Pokéball SVG ──────────────────────────────────────────────────────────────
-function Pokeball({ size = 28, spinning = false }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100"
-      style={{ animation: spinning ? "spin 1s linear infinite" : "none", flexShrink: 0 }}>
-      <circle cx="50" cy="50" r="48" fill="#FF3333" stroke="#222" strokeWidth="4"/>
-      <path d="M2 50 A48 48 0 0 1 98 50" fill="white"/>
-      <rect x="2" y="46" width="96" height="8" fill="#222"/>
-      <circle cx="50" cy="50" r="14" fill="white" stroke="#222" strokeWidth="4"/>
-      <circle cx="50" cy="50" r="7"  fill="#FF3333" stroke="#222" strokeWidth="2"/>
-    </svg>
-  );
+async function fetchCardPrice(cardId){
+  const res=await fetch(`https://api.pokemontcg.io/v2/cards/${cardId}?select=tcgplayer,cardmarket`);
+  const d=await res.json();
+  return d.data||null;
 }
 
-// ── Progress bar ──────────────────────────────────────────────────────────────
-function ProgressBar({ collected, total, color, label }) {
-  const pct = total > 0 ? Math.round(collected / total * 100) : 0;
-  return (
-    <div className="progress-wrap">
-      <div className="progress-labels">
-        <span>{label !== undefined ? label : `${collected}/${total} cards`}</span>
-        <span style={{ fontWeight:700, color }}>{pct}%</span>
-      </div>
-      <div className="progress-track">
-        <div className="progress-fill"
-          style={{ width:`${pct}%`, background:color, boxShadow:`0 0 6px ${color}88` }} />
-      </div>
-    </div>
-  );
-}
-
-// ── Card tile ─────────────────────────────────────────────────────────────────
-function CardTile({ card, owned, onToggle }) {
-  return (
-    <div className={`card-tile${owned ? " owned" : ""}`} onClick={() => onToggle(card)}>
-      {card.images?.small
-        ? <img src={card.images.small} alt={card.name} loading="lazy" />
-        : <div className="card-tile-no-img">{card.name}</div>}
-      <div className="card-info">
-        <div className="card-name">{card.name}</div>
-        <div className="card-sub">#{card.number} · {card.rarity || "?"}</div>
-      </div>
-      {owned && <div className="owned-badge">✓</div>}
-    </div>
-  );
-}
-
-// ── Migration: backfill dexNumber + generation for cards saved before this field existed ──
-// Cards saved by the old code have no `dexNumber` key at all (undefined).
-// Cards saved by the new code explicitly set dexNumber to null (Trainer/Energy) or a number.
-// We only need to hit the API for the undefined ones.
-async function fetchDexNumbers(cardIds) {
-  // API supports querying up to ~20 IDs at once via OR syntax
-  const BATCH = 20;
-  const results = {};
-  for (let i = 0; i < cardIds.length; i += BATCH) {
-    const batch = cardIds.slice(i, i + BATCH);
-    const q     = batch.map(id => `id:${id}`).join(" OR ");
-    try {
-      const params = new URLSearchParams({ q, pageSize: String(BATCH), select: "id,nationalPokedexNumbers" });
-      const res    = await fetch(`https://api.pokemontcg.io/v2/cards?${params}`);
-      const data   = await res.json();
-      (data.data || []).forEach(card => {
-        results[card.id] = card.nationalPokedexNumbers?.[0] ?? null;
-      });
-    } catch { /* leave those cards unresolved this run */ }
+async function fetchDexNumbers(cardIds){
+  const BATCH=20, results={};
+  for(let i=0;i<cardIds.length;i+=BATCH){
+    const batch=cardIds.slice(i,i+BATCH);
+    const q=batch.map(id=>`id:${id}`).join(" OR ");
+    try{
+      const params=new URLSearchParams({q,pageSize:String(BATCH),select:"id,nationalPokedexNumbers"});
+      const res=await fetch(`https://api.pokemontcg.io/v2/cards?${params}`);
+      (await res.json()).data?.forEach(c=>{ results[c.id]=c.nationalPokedexNumbers?.[0]??null; });
+    }catch{}
   }
   return results;
 }
 
-// ── App ───────────────────────────────────────────────────────────────────────
-function App() {
-  const [tab,            setTab]           = useState("browse");
-  const [collection,     setCollection]    = useState(loadCollection);
-  const [searchQuery,    setSearchQuery]   = useState("");
-  const [selectedSet,    setSelectedSet]   = useState("");
-  const [cards,          setCards]         = useState([]);
-  const [loading,        setLoading]       = useState(false);
-  const [migrating,      setMigrating]     = useState(false);
-  const [toast,          setToast]         = useState(null);
-  const [selectedSeries, setSelectedSeries]= useState("Scarlet & Violet");
+async function identifyCardImage(base64, apiKey){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+    body:JSON.stringify({
+      model:"claude-haiku-4-5-20251001",
+      max_tokens:200,
+      messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:base64}},
+        {type:"text",text:'Identify this Pokémon TCG card. Respond ONLY with JSON (no markdown): {"name":"pokemon name","setName":"set name","number":"card number","confidence":"high|medium|low"}. If unidentifiable set confidence to "low" and use empty strings.'}
+      ]}]
+    })
+  });
+  const d=await res.json();
+  const text=d.content?.[0]?.text||"{}";
+  return JSON.parse(text.replace(/```[a-z]*/g,"").replace(/```/g,"").trim());
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+function Pokeball({size=28,spinning=false}){
+  return <svg width={size} height={size} viewBox="0 0 100 100" style={{animation:spinning?"spin 1s linear infinite":"none",flexShrink:0}}>
+    <circle cx="50" cy="50" r="48" fill="#FF3333" stroke="#222" strokeWidth="4"/>
+    <path d="M2 50 A48 48 0 0 1 98 50" fill="white"/>
+    <rect x="2" y="46" width="96" height="8" fill="#222"/>
+    <circle cx="50" cy="50" r="14" fill="white" stroke="#222" strokeWidth="4"/>
+    <circle cx="50" cy="50" r="7" fill="#FF3333" stroke="#222" strokeWidth="2"/>
+  </svg>;
+}
+
+function ProgressBar({collected,total,color,label}){
+  const pct=total>0?Math.round(collected/total*100):0;
+  return <div className="progress-wrap">
+    <div className="progress-labels">
+      <span>{label!==undefined?label:`${collected}/${total} cards`}</span>
+      <span style={{fontWeight:700,color}}>{pct}%</span>
+    </div>
+    <div className="progress-track">
+      <div className="progress-fill" style={{width:`${pct}%`,background:color,boxShadow:`0 0 6px ${color}88`}}/>
+    </div>
+  </div>;
+}
+
+function CardTile({card,owned,onToggle,onPrice}){
+  return <div className={`card-tile${owned?" owned":""}`} onClick={()=>onToggle(card)}>
+    {card.images?.small
+      ?<img src={card.images.small} alt={card.name} loading="lazy"/>
+      :<div className="card-tile-no-img">{card.name}</div>}
+    <div className="card-info">
+      <div className="card-name">{card.name}</div>
+      <div className="card-sub">#{card.number}·{card.rarity||"?"}</div>
+    </div>
+    {owned&&<div className="owned-badge">✓</div>}
+    <button className="price-btn" onClick={e=>{e.stopPropagation();onPrice(card);}}>💰</button>
+  </div>;
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+function App(){
+  const [tab,           setTab]          = useState("browse");
+  const [collection,    setCollection]   = useState(loadCollection);
+  const [settings,      setSettings]     = useState(loadSettings);
+  const [searchQuery,   setSearchQuery]  = useState("");
+  const [selectedSet,   setSelectedSet]  = useState("");
+  const [cards,         setCards]        = useState([]);
+  const [loading,       setLoading]      = useState(false);
+  const [migrating,     setMigrating]    = useState(false);
+  const [toast,         setToast]        = useState(null);
+  const [selectedSeries,setSelectedSeries]=useState("Scarlet & Violet");
+  const [setsView,      setSetsView]     = useState("bySet"); // "bySet"|"byYear"
+
+  // Modals
+  const [settingsOpen,  setSettingsOpen] = useState(false);
+  const [pendingCard,   setPendingCard]  = useState(null); // card waiting for price-paid input
+  const [priceCard,     setPriceCard]    = useState(null); // card to show market price for
+  const [priceData,     setPriceData]    = useState(null);
+  const [priceLoading,  setPriceLoading] = useState(false);
+  const [pricePaidInput,setPricePaidInput]=useState("");
+
+  // Camera
+  const [camResult,     setCamResult]    = useState(null); // {name,setName,number,confidence}
+  const [camPreview,    setCamPreview]   = useState(null);
+  const [camLoading,    setCamLoading]   = useState(false);
+  const [camOpen,       setCamOpen]      = useState(false);
+  const cameraRef = useRef();
+  const importRef = useRef();
   const debounceRef = useRef();
-  const importRef   = useRef();
 
-  useEffect(() => { saveCollection(collection); }, [collection]);
+  // Persist
+  useEffect(()=>{ saveCollection(collection); },[collection]);
+  useEffect(()=>{ saveSettings(settings); },[settings]);
 
-  // One-time migration: backfill dexNumber for cards saved before this field existed.
-  // Cards without the key at all (undefined) haven't been looked up yet.
-  // Cards with null were already checked and are Trainer/Energy cards — skip them.
-  useEffect(() => {
-    const needsMigration = Object.values(collection).filter(c => c.dexNumber === undefined);
-    if (needsMigration.length === 0) return;
+  // Migration: backfill dexNumber for cards saved without it
+  useEffect(()=>{
+    const need=Object.values(collection).filter(c=>c.dexNumber===undefined);
+    if(!need.length) return;
     setMigrating(true);
-    fetchDexNumbers(needsMigration.map(c => c.id)).then(dexMap => {
-      setCollection(prev => {
-        const next = { ...prev };
-        needsMigration.forEach(c => {
-          if (!next[c.id]) return;
-          const dexNum = (c.id in dexMap) ? dexMap[c.id] : null;
-          const gen    = getGeneration(dexNum);
-          next[c.id]   = { ...next[c.id], dexNumber: dexNum, generation: gen?.num ?? null };
+    fetchDexNumbers(need.map(c=>c.id)).then(dexMap=>{
+      setCollection(prev=>{
+        const next={...prev};
+        need.forEach(c=>{
+          if(!next[c.id]) return;
+          const dexNum=(c.id in dexMap)?dexMap[c.id]:null;
+          const gen=getGeneration(dexNum);
+          next[c.id]={...next[c.id],dexNumber:dexNum,generation:gen?.num??null};
         });
         return next;
       });
       setMigrating(false);
     });
-  }, []); // run once on mount
+  },[]);
 
-  const showToast = (msg, color = "#FFD700") => {
-    setToast({ msg, color });
-    setTimeout(() => setToast(null), 2200);
-  };
+  const showToast=(msg,color="#FFD700")=>{ setToast({msg,color}); setTimeout(()=>setToast(null),2200); };
 
-  const doSearch = useCallback(async (q, setId) => {
-    if (!q && !setId) { setCards([]); return; }
+  const doSearch=useCallback(async(q,setId,lang)=>{
+    if(!q&&!setId){setCards([]);return;}
     setLoading(true);
-    try { setCards(await searchCards(q, setId)); }
-    catch { setCards([]); showToast("Search failed – check internet", "#FF6666"); }
+    try{setCards(await searchCards(q,setId,lang));}
+    catch{setCards([]);showToast("Search failed – check internet","#FF6666");}
     setLoading(false);
-  }, []);
+  },[]);
 
-  useEffect(() => {
+  useEffect(()=>{
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => doSearch(searchQuery, selectedSet), 500);
-  }, [searchQuery, selectedSet, doSearch]);
+    debounceRef.current=setTimeout(()=>doSearch(searchQuery,selectedSet,settings.language),500);
+  },[searchQuery,selectedSet,settings.language,doSearch]);
 
-  // Toggle card: stores dexNumber + generation for Gens tab
-  const toggleCard = card => {
-    setCollection(prev => {
-      const next = { ...prev };
-      if (next[card.id]) {
-        delete next[card.id];
-        showToast(`Removed ${card.name}`, "#FF6666");
-      } else {
-        const dexNum = card.nationalPokedexNumbers?.[0] ?? null;
-        const gen    = getGeneration(dexNum);
-        next[card.id] = {
-          id:         card.id,
-          name:       card.name,
-          set:        card.set?.id,
-          setName:    card.set?.name,
-          number:     card.number,
-          rarity:     card.rarity,
-          dexNumber:  dexNum,          // null for Trainer/Energy cards
-          generation: gen?.num ?? null,
-          added:      Date.now(),
-        };
-        showToast(`Added ${card.name}! ✓`, "#44CC44");
+  // Add card — opens price-paid modal
+  const startAddCard=card=>{
+    if(collection[card.id]){
+      // Remove
+      setCollection(prev=>{const n={...prev};delete n[card.id];return n;});
+      showToast(`Removed ${card.name}`,"#FF6666");
+    } else {
+      setPendingCard(card);
+      setPricePaidInput("");
+    }
+  };
+
+  const confirmAddCard=(card,pricePaid)=>{
+    const dexNum=card.nationalPokedexNumbers?.[0]??null;
+    const gen=getGeneration(dexNum);
+    const setData=SETS.find(s=>s.id===card.set?.id);
+    setCollection(prev=>({...prev,[card.id]:{
+      id:card.id, name:card.name,
+      set:card.set?.id, setName:card.set?.name,
+      number:card.number, rarity:card.rarity,
+      dexNumber:dexNum, generation:gen?.num??null,
+      year:setData?.year??null,
+      pricePaid:pricePaid||null,
+      added:Date.now(),
+    }}));
+    setPendingCard(null);
+    showToast(`Added ${card.name}! ✓`,"#44CC44");
+  };
+
+  // Price lookup
+  const openPrice=async card=>{
+    setPriceCard(card);
+    setPriceData(null);
+    setPriceLoading(true);
+    try{setPriceData(await fetchCardPrice(card.id));}
+    catch{}
+    setPriceLoading(false);
+  };
+
+  // Camera
+  const handleCameraFile=async e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=async evt=>{
+      const dataUrl=evt.target.result;
+      setCamPreview(dataUrl);
+      setCamResult(null);
+      if(settings.apiKey){
+        setCamLoading(true);
+        try{
+          const base64=dataUrl.split(",")[1];
+          const result=await identifyCardImage(base64,settings.apiKey);
+          setCamResult(result);
+          if(result.name && result.confidence!=="low"){
+            setSearchQuery(result.name);
+          }
+        }catch{ setCamResult({name:"",confidence:"low"}); }
+        setCamLoading(false);
       }
-      return next;
-    });
-  };
-
-  // ── Export — backward-compatible: same card fields + new generationStats block ──
-  const exportJSON = () => {
-    const cardList = Object.values(collection);
-
-    const setProgress = SETS.map(s => ({
-      set:     s.name,
-      series:  s.series,
-      owned:   cardList.filter(c => c.set === s.id).length,
-      total:   s.total,
-      percent: Math.round(cardList.filter(c => c.set === s.id).length / s.total * 100),
-    })).filter(s => s.owned > 0);
-
-    // Unique species (by dex number) per generation — matches Wikipedia data
-    const generationStats = GENERATIONS.map(g => {
-      const inGen        = cardList.filter(c => c.dexNumber >= g.range[0] && c.dexNumber <= g.range[1]);
-      const uniqueSpecies = new Set(inGen.map(c => c.dexNumber)).size;
-      return {
-        generation:    g.num,
-        name:          `Generation ${g.roman}`,
-        region:        g.region,
-        games:         g.games,
-        years:         g.years,
-        dexRange:      `#${g.range[0]}–#${g.range[1]}`,
-        uniqueSpecies,
-        totalSpecies:  g.total,
-        totalCards:    inGen.length,
-        percent:       Math.round(uniqueSpecies / g.total * 100),
-      };
-    }).filter(g => g.totalCards > 0);
-
-    const payload = {
-      exported:        new Date().toISOString(),
-      totalCards:      cardList.length,
-      setProgress,
-      generationStats, // new block — importers can safely ignore if not needed
-      cards:           cardList.sort((a, b) => a.name.localeCompare(b.name)),
     };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href = url; a.download = `pokemon-collection-${new Date().toISOString().slice(0,10)}.json`;
-    a.click(); URL.revokeObjectURL(url);
-    showToast("Collection exported! 📦", "#FFD700");
+    reader.readAsDataURL(file);
+    e.target.value="";
   };
 
-  // ── Import — accepts any previously exported file ──
-  const importJSON = e => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = evt => {
-      try {
-        const data     = JSON.parse(evt.target.result);
-        const cardList = Array.isArray(data.cards) ? data.cards
-                       : Array.isArray(data)        ? data
-                       : Object.values(data);
-        const rebuilt = {};
-        cardList.forEach(c => { if (c.id) rebuilt[c.id] = c; });
-        setCollection(prev => ({ ...prev, ...rebuilt }));
-        showToast(`Imported ${cardList.length} cards! ✓`, "#44CC44");
-      } catch { showToast("Import failed – invalid file", "#FF6666"); }
+  // Export
+  const exportJSON=()=>{
+    const cardList=Object.values(collection);
+    const setProgress=SETS.map(s=>({
+      set:s.name,series:s.series,year:s.year,
+      owned:cardList.filter(c=>c.set===s.id).length,
+      total:s.total,
+      percent:Math.round(cardList.filter(c=>c.set===s.id).length/s.total*100),
+    })).filter(s=>s.owned>0);
+
+    const generationStats=GENERATIONS.map(g=>{
+      const inGen=cardList.filter(c=>c.dexNumber>=g.range[0]&&c.dexNumber<=g.range[1]);
+      const uniqueSpecies=new Set(inGen.map(c=>c.dexNumber)).size;
+      return{generation:g.num,name:`Generation ${g.roman}`,region:g.region,games:g.games,
+        years:g.years,dexRange:`#${g.range[0]}–#${g.range[1]}`,uniqueSpecies,
+        totalSpecies:g.total,totalCards:inGen.length,percent:Math.round(uniqueSpecies/g.total*100)};
+    }).filter(g=>g.totalCards>0);
+
+    const yearStats=[...new Set(SETS.map(s=>s.year))].sort((a,b)=>b-a).map(yr=>{
+      const setsThisYear=SETS.filter(s=>s.year===yr);
+      const owned=cardList.filter(c=>setsThisYear.some(s=>s.id===c.set)).length;
+      const total=setsThisYear.reduce((a,s)=>a+s.total,0);
+      return{year:yr,setsCount:setsThisYear.length,owned,total,percent:Math.round(owned/total*100)};
+    }).filter(y=>y.owned>0);
+
+    const totalValue=cardList.reduce((a,c)=>a+(parseFloat(c.pricePaid)||0),0);
+    const payload={
+      exported:new Date().toISOString(),
+      totalCards:cardList.length,
+      totalValuePaid:`${settings.currency}${totalValue.toFixed(2)}`,
+      setProgress, generationStats, yearStats,
+      cards:cardList.sort((a,b)=>a.name.localeCompare(b.name)),
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download=`pokemon-collection-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast("Exported! 📦","#FFD700");
+  };
+
+  const importJSON=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=evt=>{
+      try{
+        const data=JSON.parse(evt.target.result);
+        const cardList=Array.isArray(data.cards)?data.cards:Array.isArray(data)?data:Object.values(data);
+        const rebuilt={};
+        cardList.forEach(c=>{if(c.id) rebuilt[c.id]=c;});
+        setCollection(prev=>({...prev,...rebuilt}));
+        showToast(`Imported ${cardList.length} cards! ✓`,"#44CC44");
+      }catch{showToast("Import failed – invalid file","#FF6666");}
     };
     reader.readAsText(file);
-    e.target.value = "";
+    e.target.value="";
   };
 
-  const clearAll = () => {
-    if (!window.confirm("Remove ALL cards from your collection? This cannot be undone.")) return;
-    setCollection({});
-    showToast("Collection cleared", "#FF6666");
+  const clearAll=()=>{
+    if(!window.confirm("Remove ALL cards? This cannot be undone.")) return;
+    setCollection({}); showToast("Collection cleared","#FF6666");
   };
 
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const totalOwned    = Object.keys(collection).length;
-  const myCards       = Object.values(collection).sort((a,b) => a.name.localeCompare(b.name));
-  const uniqueSpecies = new Set(myCards.filter(c => c.dexNumber).map(c => c.dexNumber)).size;
-  const setStats      = SETS.map(s => ({ ...s, owned: myCards.filter(c => c.set === s.id).length }));
-  const seriesList    = [...new Set(SETS.map(s => s.series))];
-
-  const genStats = GENERATIONS.map(g => {
-    const inGen        = myCards.filter(c => c.dexNumber >= g.range[0] && c.dexNumber <= g.range[1]);
-    const uniqueDex    = new Set(inGen.map(c => c.dexNumber));
-    return { ...g, uniqueSpecies: uniqueDex.size, totalCards: inGen.length };
+  // Derived
+  const totalOwned=Object.keys(collection).length;
+  const myCards=Object.values(collection).sort((a,b)=>a.name.localeCompare(b.name));
+  const uniqueSpecies=new Set(myCards.filter(c=>c.dexNumber).map(c=>c.dexNumber)).size;
+  const totalValue=myCards.reduce((a,c)=>a+(parseFloat(c.pricePaid)||0),0);
+  const setStats=SETS.map(s=>({...s,owned:myCards.filter(c=>c.set===s.id).length}));
+  const seriesList=[...new Set(SETS.map(s=>s.series))];
+  const genStats=GENERATIONS.map(g=>{
+    const inGen=myCards.filter(c=>c.dexNumber>=g.range[0]&&c.dexNumber<=g.range[1]);
+    return{...g,uniqueSpecies:new Set(inGen.map(c=>c.dexNumber)).size,totalCards:inGen.length};
+  });
+  const years=[...new Set(SETS.map(s=>s.year))].sort((a,b)=>b-a);
+  const yearStats=years.map(yr=>{
+    const setsThisYear=SETS.filter(s=>s.year===yr);
+    const owned=myCards.filter(c=>setsThisYear.some(s=>s.id===c.set)).length;
+    const total=setsThisYear.reduce((a,s)=>a+s.total,0);
+    return{year:yr,sets:setsThisYear,owned,total,pct:Math.round(owned/total*100)};
   });
 
-  return (
-    <div id="app">
+  const cur=settings.currency;
 
-      {/* ── Header ── */}
-      <div className="header">
-        <div className="header-row">
-          <Pokeball size={36} />
-          <div>
-            <div className="header-title">PokéDex Collector</div>
-            <div className="header-sub">
-              {totalOwned} card{totalOwned!==1?"s":""} · {uniqueSpecies} species
-            </div>
-          </div>
+  // Price display helper
+  const fmtPrice=(n)=>n!=null?`${cur}${Number(n).toFixed(2)}`:"—";
+
+  return <div id="app">
+    {/* ── Header ── */}
+    <div className="header">
+      <div className="header-row">
+        <Pokeball size={32}/>
+        <div style={{flex:1}}>
+          <div className="header-title">PokéDex Collector</div>
+          <div className="header-sub">{totalOwned} cards · {uniqueSpecies} species{totalValue>0?` · ${cur}${totalValue.toFixed(2)} paid`:""}</div>
         </div>
-        {tab === "browse" && (
-          <div className="search-row">
-            <div className="search-wrap">
-              <span className="search-icon">🔍</span>
-              <input className="search-input" value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search Pokémon cards…" />
-            </div>
-            <select className="set-select" value={selectedSet}
-              onChange={e => setSelectedSet(e.target.value)}>
-              <option value="">All Sets</option>
-              {SETS.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-        )}
+        <button className="header-btn" onClick={()=>{setCamOpen(true);cameraRef.current.click();}} title="Scan card">📷</button>
+        <button className="header-btn" onClick={()=>setSettingsOpen(true)} title="Settings">⚙️</button>
       </div>
-
-      {/* ── Tab bar ── */}
-      <div className={`tabbar${tab !== "browse" ? " no-search" : ""}`}>
-        {[
-          { id:"browse",     label:"🔍 Browse"  },
-          { id:"sets",       label:"📦 Sets"    },
-          { id:"gens",       label:"🏆 Gens"    },
-          { id:"collection", label:"⭐ My Cards" },
-        ].map(t => (
-          <button key={t.id} className={`tab-btn${tab===t.id?" active":""}`}
-            onClick={() => setTab(t.id)}>{t.label}</button>
-        ))}
-      </div>
-
-      {/* ══════════ BROWSE ══════════ */}
-      {tab === "browse" && (
-        <div className="content">
-          {loading && (
-            <div className="loading"><Pokeball size={48} spinning /><div className="loading-text">Searching…</div></div>
-          )}
-          {!loading && cards.length === 0 && (
-            <div className="empty">
-              <div className="empty-icon">🎴</div>
-              <div className="empty-title">Search for a card above!</div>
-              <div className="empty-sub">Try "Pikachu", "Charizard", or pick a set 👆</div>
-            </div>
-          )}
-          {!loading && cards.length > 0 && (
-            <>
-              <div className="count-chip">{cards.length} card{cards.length!==1?"s":""} found</div>
-              <div className="card-grid">
-                {cards.map(card => (
-                  <CardTile key={card.id} card={card}
-                    owned={!!collection[card.id]} onToggle={toggleCard} />
-                ))}
-              </div>
-            </>
-          )}
+      {tab==="browse"&&<div className="search-row">
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input className="search-input" value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search Pokémon cards…"/>
         </div>
-      )}
-
-      {/* ══════════ SETS ══════════ */}
-      {tab === "sets" && (
-        <div className="content">
-          <div className="series-row">
-            {seriesList.map(s => {
-              const col = SERIES_COLORS[s] || SERIES_COLORS["XY"];
-              const active = selectedSeries === s;
-              return (
-                <button key={s} className="series-pill"
-                  onClick={() => setSelectedSeries(s)}
-                  style={{ background: active ? col.bg : "#ffffff15", boxShadow: active ? `0 0 12px ${col.bg}88` : "none" }}>
-                  {s}
-                </button>
-              );
-            })}
-          </div>
-
-          {setStats.filter(s => s.series === selectedSeries).map(s => {
-            const col = SERIES_COLORS[s.series] || SERIES_COLORS["XY"];
-            const pct = Math.round(s.owned / s.total * 100);
-            return (
-              <div key={s.id} className="set-card"
-                style={{ borderColor: s.owned > 0 ? col.bg+"55" : "#ffffff15" }}
-                onClick={() => { setSelectedSet(s.id); setTab("browse"); doSearch("", s.id); }}>
-                <div className="set-card-header">
-                  <div>
-                    <div className="set-name">{s.name}</div>
-                    <div className="set-sub">{s.series}</div>
-                  </div>
-                  <span style={{ fontSize:20 }}>{pct===100?"🏆":pct>=50?"⭐":""}</span>
-                </div>
-                <ProgressBar collected={s.owned} total={s.total} color={col.bg} />
-              </div>
-            );
-          })}
-
-          <div className="stats-box">
-            <div className="stats-title">📊 Overall Stats</div>
-            <div className="stats-grid">
-              {[
-                { label:"Total Cards Owned",  val: totalOwned },
-                { label:"Sets Started",        val: setStats.filter(s=>s.owned>0).length },
-                { label:"Sets Completed 🏆",   val: setStats.filter(s=>s.owned>0&&s.owned>=s.total).length },
-                { label:"Total Sets Tracked",  val: SETS.length },
-              ].map(stat => (
-                <div key={stat.label} className="stat-item">
-                  <div className="stat-val">{stat.val}</div>
-                  <div className="stat-label">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ══════════ GENERATIONS ══════════ */}
-      {tab === "gens" && (
-        <div className="content">
-
-          {/* Migration progress banner */}
-          {migrating && (
-            <div style={{
-              display:"flex", alignItems:"center", gap:10,
-              background:"#FFD70018", border:"1px solid #FFD70055",
-              borderRadius:12, padding:"10px 14px", marginBottom:16
-            }}>
-              <Pokeball size={20} spinning />
-              <span style={{ fontSize:12, fontWeight:700, color:"#FFD700" }}>
-                Looking up Pokédex numbers for your existing cards…
-              </span>
-            </div>
-          )}
-
-          {/* Overall species summary */}
-          <div className="stats-box" style={{ marginTop:0, marginBottom:20 }}>
-            <div className="stats-title">🌍 All Generations</div>
-            <div className="stats-grid">
-              {[
-                { label:"Species Owned",       val: uniqueSpecies },
-                { label:"Total Species",       val: "1,025" },
-                { label:"Generations Started", val: genStats.filter(g=>g.uniqueSpecies>0).length },
-                { label:"Total Generations",   val: GENERATIONS.length },
-              ].map(stat => (
-                <div key={stat.label} className="stat-item">
-                  <div className="stat-val">{stat.val}</div>
-                  <div className="stat-label">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* One card per generation */}
-          {genStats.map(g => {
-            const pct = Math.round(g.uniqueSpecies / g.total * 100);
-            const hasCards = g.totalCards > 0;
-            return (
-              <div key={g.num} className="gen-card"
-                style={{ borderColor: hasCards ? g.color+"55" : "#ffffff15",
-                         opacity: hasCards ? 1 : 0.55 }}>
-                <div className="gen-header">
-                  {/* Generation badge */}
-                  <div className="gen-badge"
-                    style={{ background: g.color+"1A", border:`2px solid ${g.color}55` }}>
-                    <div className="gen-badge-label" style={{ color: g.color }}>GEN</div>
-                    <div className="gen-badge-roman" style={{ color: g.color }}>{g.roman}</div>
-                  </div>
-                  <div className="gen-info">
-                    <div className="gen-title">{g.region} Region</div>
-                    <div className="gen-meta">{g.games}</div>
-                    <div className="gen-meta">{g.years} &nbsp;·&nbsp; Dex #{g.range[0]}–{g.range[1]}</div>
-                  </div>
-                  <span style={{ fontSize:22, flexShrink:0 }}>
-                    {pct===100?"🏆":pct>=50?"⭐":hasCards?"✨":""}
-                  </span>
-                </div>
-
-                {/* Species progress bar */}
-                <ProgressBar
-                  collected={g.uniqueSpecies} total={g.total} color={g.color}
-                  label={`${g.uniqueSpecies}/${g.total} species`} />
-
-                {/* Chips */}
-                <div className="gen-chips">
-                  <span className="gen-chip">🎴 {g.totalCards} card{g.totalCards!==1?"s":""}</span>
-                  {g.totalCards > g.uniqueSpecies && g.uniqueSpecies > 0 && (
-                    <span className="gen-chip">✦ {g.totalCards - g.uniqueSpecies} variant{g.totalCards-g.uniqueSpecies!==1?"s":""}</span>
-                  )}
-                  {!hasCards && (
-                    <span className="gen-chip" style={{ color:"#ffffff44" }}>No cards yet</span>
-                  )}
-                  {pct===100 && (
-                    <span className="gen-chip" style={{ background:g.color+"33", color:g.color }}>Complete! 🎉</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          <div className="dex-note">
-            Generation data from <strong>wikipedia.org/wiki/List_of_Pokémon</strong>. Species counts use the National Pokédex number recorded when you add a card via Browse. Trainer and Energy cards have no Pokédex number and are counted in Sets only.
-          </div>
-        </div>
-      )}
-
-      {/* ══════════ MY CARDS ══════════ */}
-      {tab === "collection" && (
-        <div className="content">
-          <div className="export-panel">
-            <div className="export-title">💾 Backup &amp; Restore</div>
-            <div className="btn-row">
-              <button className="action-btn btn-export" onClick={exportJSON}>⬇️ Export JSON</button>
-              <button className="action-btn btn-import" onClick={() => importRef.current.click()}>⬆️ Import JSON</button>
-            </div>
-            {totalOwned > 0 && (
-              <div className="btn-row" style={{ marginTop:8 }}>
-                <button className="action-btn btn-danger" onClick={clearAll}>🗑️ Clear Collection</button>
-              </div>
-            )}
-            <input ref={importRef} type="file" accept=".json" style={{ display:"none" }} onChange={importJSON} />
-            <div style={{ fontSize:10, color:"#ffffff44", marginTop:10, lineHeight:1.5 }}>
-              Export saves your full collection as JSON including set progress and generation stats. Importing merges cards — it won't delete what's already there.
-            </div>
-          </div>
-
-          {myCards.length === 0 ? (
-            <div className="empty">
-              <div className="empty-icon">📭</div>
-              <div className="empty-title">No cards yet!</div>
-              <div className="empty-sub">Go to Browse and tap cards to add them.</div>
-            </div>
-          ) : (
-            <>
-              <div className="count-chip">{myCards.length} card{myCards.length!==1?"s":""} · {uniqueSpecies} species</div>
-
-              {SETS.filter(s => myCards.some(c => c.set === s.id)).map(s => {
-                const setCards = myCards.filter(c => c.set === s.id)
-                  .sort((a,b) => Number(a.number) - Number(b.number));
-                const col = SERIES_COLORS[s.series] || SERIES_COLORS["XY"];
-                return (
-                  <div key={s.id} className="set-group">
-                    <div className="set-group-header" style={{ borderLeft:`4px solid ${col.bg}` }}>
-                      <div>
-                        <div style={{ fontWeight:900, fontSize:14 }}>{s.name}</div>
-                        <div style={{ fontSize:11, color:"#ffffff66" }}>{setCards.length}/{s.total} cards owned</div>
-                      </div>
-                    </div>
-                    <div className="card-grid">
-                      {setCards.map(card => (
-                        <div key={card.id} className="mini-card"
-                          onClick={() => {
-                            setCollection(prev => { const n={...prev}; delete n[card.id]; return n; });
-                            showToast(`Removed ${card.name}`, "#FF6666");
-                          }}>
-                          <div className="mini-name">{card.name}</div>
-                          <div className="mini-num">#{card.number}</div>
-                          <div className="mini-rar">{card.rarity || "?"}</div>
-                          {card.dexNumber && <div className="mini-dex">Dex #{card.dexNumber}</div>}
-                          <div className="mini-rem">tap to remove</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {myCards.filter(c => !SETS.find(s => s.id === c.set)).length > 0 && (
-                <div className="set-group">
-                  <div className="set-group-header" style={{ borderLeft:"4px solid #888" }}>
-                    <div style={{ fontWeight:900, fontSize:14 }}>Other</div>
-                  </div>
-                  <div className="card-grid">
-                    {myCards.filter(c => !SETS.find(s => s.id === c.set)).map(card => (
-                      <div key={card.id} className="mini-card"
-                        onClick={() => {
-                          setCollection(prev => { const n={...prev}; delete n[card.id]; return n; });
-                        }}>
-                        <div className="mini-name">{card.name}</div>
-                        <div className="mini-num">#{card.number}</div>
-                        <div className="mini-rem">tap to remove</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {toast && <div className="toast" style={{ background: toast.color }}>{toast.msg}</div>}
+        <select className="set-select" value={selectedSet} onChange={e=>setSelectedSet(e.target.value)}>
+          <option value="">All Sets</option>
+          {SETS.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+      </div>}
     </div>
-  );
+
+    {/* Hidden inputs */}
+    <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={handleCameraFile}/>
+    <input ref={importRef} type="file" accept=".json" style={{display:"none"}} onChange={importJSON}/>
+
+    {/* ── Tab bar ── */}
+    <div className={`tabbar${tab!=="browse"?" no-search":""}`}>
+      {[{id:"browse",label:"🔍 Browse"},{id:"sets",label:"📦 Sets"},{id:"gens",label:"🏆 Gens"},{id:"collection",label:"⭐ My Cards"}]
+        .map(t=><button key={t.id} className={`tab-btn${tab===t.id?" active":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>)}
+    </div>
+
+    {/* ════════ BROWSE ════════ */}
+    {tab==="browse"&&<div className="content">
+      {loading&&<div className="loading"><Pokeball size={44} spinning/><div className="loading-text">Searching…</div></div>}
+      {!loading&&cards.length===0&&<div className="empty">
+        <div className="empty-icon">🎴</div>
+        <div className="empty-title">Search for a card above!</div>
+        <div className="empty-sub">Try "Pikachu", "Charizard", or pick a set 👆</div>
+        {settings.language!=="English"&&<div className="empty-sub" style={{marginTop:6,color:"#FFD700"}}>Language: {settings.language}</div>}
+      </div>}
+      {!loading&&cards.length>0&&<>
+        <div className="count-chip">{cards.length} card{cards.length!==1?"s":""} found {settings.language!=="English"?`· ${settings.language}`:""}</div>
+        <div className="card-grid">
+          {cards.map(card=><CardTile key={card.id} card={card} owned={!!collection[card.id]} onToggle={startAddCard} onPrice={openPrice}/>)}
+        </div>
+      </>}
+    </div>}
+
+    {/* ════════ SETS ════════ */}
+    {tab==="sets"&&<div className="content">
+      <div className="view-toggle">
+        <button className={`view-toggle-btn${setsView==="bySet"?" active":""}`} onClick={()=>setSetsView("bySet")}>By Set</button>
+        <button className={`view-toggle-btn${setsView==="byYear"?" active":""}`} onClick={()=>setSetsView("byYear")}>📅 By Year</button>
+      </div>
+
+      {setsView==="bySet"&&<>
+        <div className="series-row">
+          {seriesList.map(s=>{
+            const col=SERIES_COLORS[s]||SERIES_COLORS["XY"];
+            const active=selectedSeries===s;
+            return <button key={s} className="series-pill"
+              onClick={()=>setSelectedSeries(s)}
+              style={{background:active?col.bg:"#ffffff15",boxShadow:active?`0 0 12px ${col.bg}88`:"none"}}>{s}</button>;
+          })}
+        </div>
+        {setStats.filter(s=>s.series===selectedSeries).map(s=>{
+          const col=SERIES_COLORS[s.series]||SERIES_COLORS["XY"];
+          const pct=Math.round(s.owned/s.total*100);
+          return <div key={s.id} className="set-card" style={{borderColor:s.owned>0?col.bg+"55":"#ffffff15"}}
+            onClick={()=>{setSelectedSet(s.id);setTab("browse");doSearch("",s.id,settings.language);}}>
+            <div className="set-card-header">
+              <div><div className="set-name">{s.name}</div><div className="set-sub">{s.series} · {s.year}</div></div>
+              <span style={{fontSize:18}}>{pct===100?"🏆":pct>=50?"⭐":""}</span>
+            </div>
+            <ProgressBar collected={s.owned} total={s.total} color={col.bg}/>
+          </div>;
+        })}
+      </>}
+
+      {setsView==="byYear"&&<>
+        {yearStats.map(y=>{
+          const dominated=y.sets[0]?SERIES_COLORS[y.sets[0].series]||SERIES_COLORS["XY"]:SERIES_COLORS["XY"];
+          return <div key={y.year} className="year-card" style={{borderColor:y.owned>0?dominated.bg+"55":"#ffffff15"}}>
+            <div className="year-header">
+              <div className="year-num" style={{color:dominated.bg}}>{y.year}</div>
+              <div style={{fontSize:11,color:"#ffffff77"}}>{y.sets.length} set{y.sets.length!==1?"s":""}</div>
+              <span style={{fontSize:18,marginLeft:"auto"}}>{y.pct===100?"🏆":y.pct>=50?"⭐":""}</span>
+            </div>
+            <ProgressBar collected={y.owned} total={y.total} color={dominated.bg}/>
+            <div style={{fontSize:10,color:"#ffffff44",marginTop:6}}>{y.sets.map(s=>s.name).join(" · ")}</div>
+          </div>;
+        })}
+        {yearStats.length===0&&<div className="empty"><div className="empty-icon">📅</div><div className="empty-title">No cards yet!</div></div>}
+      </>}
+
+      <div className="stats-box">
+        <div className="stats-title">📊 Overall Stats</div>
+        <div className="stats-grid">
+          {[
+            {label:"Total Cards Owned",  val:totalOwned},
+            {label:"Sets Started",        val:setStats.filter(s=>s.owned>0).length},
+            {label:"Sets Completed 🏆",   val:setStats.filter(s=>s.owned>0&&s.owned>=s.total).length},
+            {label:`Total Spent`,         val:`${cur}${totalValue.toFixed(2)}`},
+          ].map(stat=><div key={stat.label} className="stat-item">
+            <div className="stat-val">{stat.val}</div>
+            <div className="stat-label">{stat.label}</div>
+          </div>)}
+        </div>
+      </div>
+    </div>}
+
+    {/* ════════ GENS ════════ */}
+    {tab==="gens"&&<div className="content">
+      {migrating&&<div className="mig-banner"><Pokeball size={18} spinning/><span style={{fontSize:11,fontWeight:700,color:"#FFD700"}}>Looking up Pokédex numbers for existing cards…</span></div>}
+      <div className="stats-box" style={{marginTop:0,marginBottom:18}}>
+        <div className="stats-title">🌍 All Generations</div>
+        <div className="stats-grid">
+          {[{label:"Species Owned",val:uniqueSpecies},{label:"Total Species",val:"1,025"},
+            {label:"Gens Started",val:genStats.filter(g=>g.uniqueSpecies>0).length},{label:"Total Gens",val:GENERATIONS.length}]
+            .map(s=><div key={s.label} className="stat-item"><div className="stat-val">{s.val}</div><div className="stat-label">{s.label}</div></div>)}
+        </div>
+      </div>
+      {genStats.map(g=>{
+        const pct=Math.round(g.uniqueSpecies/g.total*100);
+        const hasCards=g.totalCards>0;
+        return <div key={g.num} className="gen-card" style={{borderColor:hasCards?g.color+"55":"#ffffff15",opacity:hasCards?1:0.5}}>
+          <div className="gen-header">
+            <div className="gen-badge" style={{background:g.color+"1A",border:`2px solid ${g.color}55`}}>
+              <div className="gen-badge-label" style={{color:g.color}}>GEN</div>
+              <div className="gen-badge-roman" style={{color:g.color}}>{g.roman}</div>
+            </div>
+            <div className="gen-info">
+              <div className="gen-title">{g.region} Region</div>
+              <div className="gen-meta">{g.games}</div>
+              <div className="gen-meta">{g.years} · Dex #{g.range[0]}–{g.range[1]}</div>
+            </div>
+            <span style={{fontSize:20,flexShrink:0}}>{pct===100?"🏆":pct>=50?"⭐":hasCards?"✨":""}</span>
+          </div>
+          <ProgressBar collected={g.uniqueSpecies} total={g.total} color={g.color} label={`${g.uniqueSpecies}/${g.total} species`}/>
+          <div className="gen-chips">
+            <span className="gen-chip">🎴 {g.totalCards} card{g.totalCards!==1?"s":""}</span>
+            {g.totalCards>g.uniqueSpecies&&g.uniqueSpecies>0&&<span className="gen-chip">✦ {g.totalCards-g.uniqueSpecies} variant{g.totalCards-g.uniqueSpecies!==1?"s":""}</span>}
+            {!hasCards&&<span className="gen-chip" style={{color:"#ffffff44"}}>No cards yet</span>}
+            {pct===100&&<span className="gen-chip" style={{background:g.color+"33",color:g.color}}>Complete! 🎉</span>}
+          </div>
+        </div>;
+      })}
+      <div className="dex-note">Generation data from wikipedia.org/wiki/List_of_Pokémon. Trainer & Energy cards have no Pokédex number and are counted in Sets only.</div>
+    </div>}
+
+    {/* ════════ MY CARDS ════════ */}
+    {tab==="collection"&&<div className="content">
+      {/* Backup panel */}
+      <div style={{background:"#ffffff0d",borderRadius:14,padding:14,border:"1px solid #ffffff15",marginBottom:14}}>
+        <div style={{fontWeight:900,fontSize:13,marginBottom:10,color:"#FFD700"}}>💾 Backup & Restore</div>
+        <div className="btn-row">
+          <button className="action-btn btn-gold" onClick={exportJSON}>⬇️ Export JSON</button>
+          <button className="action-btn btn-ghost" onClick={()=>importRef.current.click()}>⬆️ Import JSON</button>
+        </div>
+        {totalOwned>0&&<div className="btn-row" style={{marginTop:8}}>
+          <button className="action-btn btn-danger" onClick={clearAll}>🗑️ Clear All</button>
+        </div>}
+      </div>
+
+      {myCards.length===0?<div className="empty">
+        <div className="empty-icon">📭</div>
+        <div className="empty-title">No cards yet!</div>
+        <div className="empty-sub">Go to Browse and tap cards to add them.</div>
+      </div>:<>
+        <div className="count-chip">{myCards.length} card{myCards.length!==1?"s":""} · {uniqueSpecies} species{totalValue>0?` · ${cur}${totalValue.toFixed(2)} paid`:""}</div>
+        {SETS.filter(s=>myCards.some(c=>c.set===s.id)).map(s=>{
+          const setCards=myCards.filter(c=>c.set===s.id).sort((a,b)=>Number(a.number)-Number(b.number));
+          const col=SERIES_COLORS[s.series]||SERIES_COLORS["XY"];
+          return <div key={s.id} className="set-group">
+            <div className="set-group-header" style={{borderLeft:`4px solid ${col.bg}`}}>
+              <div>
+                <div style={{fontWeight:900,fontSize:13}}>{s.name}</div>
+                <div style={{fontSize:10,color:"#ffffff66"}}>{setCards.length}/{s.total} owned · {s.year}</div>
+              </div>
+            </div>
+            <div className="card-grid">
+              {setCards.map(card=><div key={card.id} className="mini-card"
+                onClick={()=>{setCollection(prev=>{const n={...prev};delete n[card.id];return n;});showToast(`Removed ${card.name}`,"#FF6666");}}>
+                <div className="mini-name">{card.name}</div>
+                <div className="mini-num">#{card.number}</div>
+                <div className="mini-rar">{card.rarity||"?"}</div>
+                {card.pricePaid&&<div className="mini-price">{cur}{parseFloat(card.pricePaid).toFixed(2)}</div>}
+                <div className="mini-rem">tap to remove</div>
+              </div>)}
+            </div>
+          </div>;
+        })}
+        {myCards.filter(c=>!SETS.find(s=>s.id===c.set)).length>0&&<div className="set-group">
+          <div className="set-group-header" style={{borderLeft:"4px solid #888"}}><div style={{fontWeight:900,fontSize:13}}>Other</div></div>
+          <div className="card-grid">
+            {myCards.filter(c=>!SETS.find(s=>s.id===c.set)).map(card=><div key={card.id} className="mini-card"
+              onClick={()=>{setCollection(prev=>{const n={...prev};delete n[card.id];return n;});}}>
+              <div className="mini-name">{card.name}</div>
+              <div className="mini-num">#{card.number}</div>
+              {card.pricePaid&&<div className="mini-price">{cur}{parseFloat(card.pricePaid).toFixed(2)}</div>}
+              <div className="mini-rem">tap to remove</div>
+            </div>)}
+          </div>
+        </div>}
+      </>}
+    </div>}
+
+    {/* ════════ MODALS ════════ */}
+
+    {/* Add card / price paid modal */}
+    {pendingCard&&<div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget){setPendingCard(null);}}}>
+      <div className="modal-sheet">
+        <div className="modal-title">➕ Add Card</div>
+        <div style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:14}}>
+          {pendingCard.images?.small&&<img src={pendingCard.images.small} alt={pendingCard.name} style={{width:70,borderRadius:8}}/>}
+          <div>
+            <div style={{fontWeight:900,fontSize:16}}>{pendingCard.name}</div>
+            <div style={{fontSize:11,color:"#ffffff77",marginTop:2}}>#{pendingCard.number} · {pendingCard.rarity||"?"}</div>
+            <div style={{fontSize:11,color:"#ffffff77"}}>{pendingCard.set?.name}</div>
+          </div>
+        </div>
+        <div className="modal-section">How much did you pay?</div>
+        <div className="modal-row">
+          <span style={{fontWeight:900,fontSize:18,color:"#FFD700"}}>{cur}</span>
+          <input className="modal-input" type="number" min="0" step="0.01" placeholder="0.00"
+            value={pricePaidInput} onChange={e=>setPricePaidInput(e.target.value)} autoFocus/>
+        </div>
+        <div className="modal-note">Optional — leave blank to skip price tracking for this card.</div>
+        <div className="btn-row" style={{marginTop:14}}>
+          <button className="action-btn btn-ghost" onClick={()=>confirmAddCard(pendingCard,null)}>Skip</button>
+          <button className="action-btn btn-gold" onClick={()=>confirmAddCard(pendingCard,pricePaidInput||null)}>Add Card ✓</button>
+        </div>
+      </div>
+    </div>}
+
+    {/* Price lookup modal */}
+    {priceCard&&<div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget){setPriceCard(null);setPriceData(null);}}}>
+      <div className="modal-sheet">
+        <div className="modal-title">💰 Market Price</div>
+        <div style={{fontWeight:900,fontSize:15,marginBottom:4}}>{priceCard.name}</div>
+        <div style={{fontSize:11,color:"#ffffff66",marginBottom:14}}>#{priceCard.number} · {priceCard.set?.name}</div>
+        {priceLoading&&<div className="loading" style={{padding:20}}><Pokeball size={36} spinning/><div className="loading-text">Fetching prices…</div></div>}
+        {!priceLoading&&priceData&&(()=>{
+          const tcp=priceData.tcgplayer?.prices||{};
+          const cmp=priceData.cardmarket?.prices||{};
+          const tcpVariants=Object.entries(tcp);
+          const hasTcp=tcpVariants.length>0;
+          const hasCmp=Object.keys(cmp).length>0;
+          return <>
+            {hasTcp&&<>
+              <div className="modal-section">TCGPlayer (USD)</div>
+              {tcpVariants.map(([variant,p])=><div key={variant} style={{marginBottom:10}}>
+                <div style={{fontSize:11,color:"#ffffff77",marginBottom:4,textTransform:"capitalize"}}>{variant.replace(/([A-Z])/g," $1")}</div>
+                <div className="price-grid">
+                  <div className="price-cell"><div className="price-cell-label">Low</div><div className="price-cell-val">${p.low?.toFixed(2)||"—"}</div></div>
+                  <div className="price-cell"><div className="price-cell-label">Market</div><div className="price-cell-val" style={{color:"#44FF88"}}>${p.market?.toFixed(2)||"—"}</div></div>
+                  <div className="price-cell"><div className="price-cell-label">High</div><div className="price-cell-val">${p.high?.toFixed(2)||"—"}</div></div>
+                </div>
+              </div>)}
+            </>}
+            {hasCmp&&<>
+              <div className="modal-section">Cardmarket (EUR)</div>
+              <div className="price-grid">
+                <div className="price-cell"><div className="price-cell-label">Low</div><div className="price-cell-val">€{cmp.lowPrice?.toFixed(2)||"—"}</div></div>
+                <div className="price-cell"><div className="price-cell-label">Trend</div><div className="price-cell-val" style={{color:"#44FF88"}}>€{cmp.trendPrice?.toFixed(2)||"—"}</div></div>
+                <div className="price-cell"><div className="price-cell-label">Avg</div><div className="price-cell-val">€{cmp.averageSellPrice?.toFixed(2)||"—"}</div></div>
+              </div>
+            </>}
+            {!hasTcp&&!hasCmp&&<div style={{textAlign:"center",padding:20,opacity:.5}}>No price data available for this card.</div>}
+            <div className="price-source">Prices are estimates from TCGPlayer / Cardmarket and may not reflect current market. Data updated: {priceData.tcgplayer?.updatedAt||priceData.cardmarket?.updatedAt||"unknown"}</div>
+          </>;
+        })()}
+        {!priceLoading&&!priceData&&<div style={{textAlign:"center",padding:20,opacity:.5}}>Could not fetch price data.</div>}
+        {collection[priceCard.id]?.pricePaid&&<div style={{marginTop:14,background:"#44FF8820",border:"1px solid #44FF8855",borderRadius:10,padding:"10px 12px"}}>
+          <div style={{fontSize:11,color:"#44FF88",fontWeight:900}}>Your purchase price</div>
+          <div style={{fontSize:18,fontWeight:900}}>{cur}{parseFloat(collection[priceCard.id].pricePaid).toFixed(2)}</div>
+        </div>}
+        <button className="action-btn btn-ghost" style={{width:"100%",marginTop:14}} onClick={()=>{setPriceCard(null);setPriceData(null);}}>Close</button>
+      </div>
+    </div>}
+
+    {/* Camera modal */}
+    {camOpen&&<div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget){setCamOpen(false);setCamPreview(null);setCamResult(null);}}}>
+      <div className="modal-sheet">
+        <div className="modal-title">📷 Scan Card</div>
+        {!camPreview&&!camLoading&&<>
+          <div style={{fontSize:13,color:"#ffffff88",lineHeight:1.6,marginBottom:14}}>
+            Take a photo of a Pokémon card to identify it.{" "}
+            {!settings.apiKey&&<span style={{color:"#FFD700"}}>Add an Anthropic API key in ⚙️ Settings to enable auto-identification.</span>}
+          </div>
+          <button className="action-btn btn-gold" style={{width:"100%"}} onClick={()=>cameraRef.current.click()}>📷 Open Camera</button>
+        </>}
+        {camLoading&&<div className="loading" style={{padding:20}}><Pokeball size={36} spinning/><div className="loading-text">Identifying card…</div></div>}
+        {camPreview&&!camLoading&&<>
+          <img src={camPreview} className="cam-preview" alt="Card scan"/>
+          {camResult&&(camResult.confidence==="low"||!camResult.name
+            ?<div style={{background:"#FF444420",border:"1px solid #FF444455",borderRadius:10,padding:"10px 12px",marginBottom:12}}>
+              <div style={{fontSize:12,color:"#FF6666",fontWeight:900}}>Could not identify card</div>
+              <div style={{fontSize:11,color:"#ffffff66",marginTop:3}}>Try a clearer photo, or search manually below.</div>
+            </div>
+            :<div className="cam-result">
+              <div className="cam-result-title">✓ Identified!</div>
+              <div className="cam-result-val">{camResult.name}</div>
+              {camResult.setName&&<div style={{fontSize:11,color:"#ffffff77",marginTop:2}}>{camResult.setName} {camResult.number?`#${camResult.number}`:""}</div>}
+            </div>
+          )}
+          {!camResult&&!settings.apiKey&&<div style={{background:"#ffffff10",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:11,color:"#ffffff77"}}>
+            No API key set — search manually for this card.
+          </div>}
+          <div className="btn-row">
+            <button className="action-btn btn-ghost" onClick={()=>{setCamPreview(null);setCamResult(null);}}>🔄 Retake</button>
+            <button className="action-btn btn-gold" onClick={()=>{
+              if(camResult?.name&&camResult.confidence!=="low") setSearchQuery(camResult.name);
+              setCamOpen(false);setCamPreview(null);setCamResult(null);setTab("browse");
+            }}>Search 🔍</button>
+          </div>
+        </>}
+        <button className="action-btn btn-ghost" style={{width:"100%",marginTop:10}} onClick={()=>{setCamOpen(false);setCamPreview(null);setCamResult(null);}}>Cancel</button>
+      </div>
+    </div>}
+
+    {/* Settings modal */}
+    {settingsOpen&&<div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget) setSettingsOpen(false);}}>
+      <div className="modal-sheet" style={{position:"relative"}}>
+        <button className="modal-close" onClick={()=>setSettingsOpen(false)}>✕</button>
+        <div className="modal-title">⚙️ Settings</div>
+
+        <div className="modal-section">Search Language</div>
+        <div className="modal-row">
+          <span className="modal-label">Language</span>
+          <select className="modal-select" value={settings.language} onChange={e=>setSettings(s=>({...s,language:e.target.value}))}>
+            {LANGUAGES.map(l=><option key={l} value={l}>{l}</option>)}
+          </select>
+        </div>
+        <div className="modal-note">Filters card searches to the selected language edition.</div>
+
+        <div className="modal-section">Currency</div>
+        <div className="modal-row">
+          <span className="modal-label">Symbol</span>
+          <select className="modal-select" value={settings.currency} onChange={e=>setSettings(s=>({...s,currency:e.target.value}))}>
+            {CURRENCIES.map(c=><option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+
+        <div className="modal-section">📷 Camera Card ID</div>
+        <div className="modal-row">
+          <span className="modal-label">API Key</span>
+          <input className="modal-input" type="password" placeholder="sk-ant-…" value={settings.apiKey}
+            onChange={e=>setSettings(s=>({...s,apiKey:e.target.value}))}/>
+        </div>
+        <div className="modal-note">
+          Enter your Anthropic API key to enable automatic card identification from photos.
+          Your key is stored locally on this device only and never sent anywhere except Anthropic's API.
+          Get a key at console.anthropic.com.
+        </div>
+
+        <div className="modal-section">Data</div>
+        <div className="btn-row">
+          <button className="action-btn btn-gold" onClick={()=>{exportJSON();setSettingsOpen(false);}}>⬇️ Export JSON</button>
+          <button className="action-btn btn-ghost" onClick={()=>{importRef.current.click();setSettingsOpen(false);}}>⬆️ Import JSON</button>
+        </div>
+        {totalOwned>0&&<div className="btn-row" style={{marginTop:8}}>
+          <button className="action-btn btn-danger" onClick={()=>{clearAll();setSettingsOpen(false);}}>🗑️ Clear Collection</button>
+        </div>}
+
+        <button className="action-btn btn-ghost" style={{width:"100%",marginTop:18}} onClick={()=>setSettingsOpen(false)}>Done</button>
+      </div>
+    </div>}
+
+    {/* Toast */}
+    {toast&&<div className="toast" style={{background:toast.color}}>{toast.msg}</div>}
+  </div>;
 }
 
-ReactDOM.createRoot(document.getElementById("app")).render(<App />);
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
 </script>
 </body>
 </html>

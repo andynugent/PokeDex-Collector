@@ -1,137 +1,61 @@
-I'd like an Android app for my 10 year old son, to record the Pokémon cards that he has. Should be able to search quickly and record variants of the same card / Pokémon. Ideally with some stats for how complete each series is.
+# CLAUDE.md
 
-6 Apr
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Reading frontend design skill
-Reading frontend design skill
-Since this is for a 10-year-old Pokémon fan, I'll build a fun, vibrant React app with a Pokémon card collection tracker — playful and bold, with bright colors, card visuals, and smooth interactions. I'll use the Pokémon TCG API to get real card data.
+## Project overview
 
+A standalone single-file HTML app (`index.html`) for a 10-year-old to track his Pokémon card collection. No build step, no dependencies to install — just open `index.html` in a browser (Chrome on Android works great).
 
-Created a file, read a file
-Created a file, read a file
-Here's your son's PokéDex Collector app! 🎴⚡
+## Running the app
 
-What it does:
+Open `index.html` directly in a browser. No server required. To test on Android, copy the file to the device and open it in Chrome.
 
-🔍 Browse tab — Search any Pokémon by name (e.g. "Pikachu", "Charizard") and filter by set. Real card images load from the Pokémon TCG API. Tap a card to add it to the collection — it gets a gold ✓ badge. Tap again to remove it.
+## Architecture
 
-📦 Sets tab — Shows every major set (Scarlet & Violet, Sword & Shield) with a coloured progress bar showing how many cards he owns out of the full set total. Tap any set to browse its cards. An overall stats block shows totals, sets started, and sets completed.
+Everything lives in `index.html` — inline CSS, then React loaded from CDN, then the app as a `<script type="text/babel">` block compiled in-browser by Babel Standalone.
 
-⭐ My Cards tab — His full collection, grouped by set, sorted by card number. Tap any card to remove it.
+**Key sections inside the script block (in order):**
 
-Features for your son:
+1. **`GENERATIONS` constant** — hardcoded Gen I–IX data (dex ranges, species counts from Wikipedia). Used to map a Pokédex number to its generation.
+2. **`SETS` constant** — hardcoded TCG set list (Scarlet & Violet, Sword & Shield, Sun & Moon) with set IDs matching the Pokémon TCG API. `SERIES_COLORS` maps series names to gradient colors.
+3. **Storage** — `localStorage` under key `pokecollection_v2`. `loadCollection()` / `saveCollection()` are the only persistence functions.
+4. **`searchCards(query, setId)`** — calls `https://api.pokemontcg.io/v2/cards`. Fetches `nationalPokedexNumbers` alongside card data so generation can be assigned at add-time.
+5. **`fetchDexNumbers(cardIds)`** — batch API lookup used only during migration (see below).
+6. **`App` component** — single root component; all state lives here. Tabs: `browse`, `sets`, `mycards`, `gens`.
+7. **Migration `useEffect`** — runs once on mount; finds cards where `dexNumber === undefined` (saved before dexNumber was added) and backfills from the API in batches of 20.
 
-Real card artwork fetched live
-Gold glow on owned cards so it's instantly obvious what he has
-Progress bars per set — the completionist itch! 🏆
-Fast name search with debouncing
-Data saved locally in the browser (persists between sessions)
-Mobile-optimised layout (480px max, sticky header, big tap targets)
-To run it on Android, you can drop this into any React environment (Vite, Create React App, or Expo Web). Let me know if you'd like me to package it as a full standalone HTML file instead — that would work directly in any mobile browser with zero setup!
+## Data model
 
+Each collected card stored in the collection object (keyed by card ID):
 
-Pokemon tracker
-Code · JSX 
-Yes, it packaged up into a standalone HTML page would be great, but can you also add the option to export the data as a JSON file
-
-6 Apr
-
-Viewed a file, created a file, read a file
-Viewed a file, created a file, read a file
-Here's the standalone HTML file — just download it and open it in any browser on Android (Chrome works great). No installation needed!
-
-What's new vs the React version:
-
-💾 Backup & Restore panel (in the My Cards tab) with three buttons — Export JSON downloads a dated file like pokemon-collection-2026-04-06.json that includes his full card list plus a set-by-set completion summary. Import JSON merges a previously exported file back in (great for moving between devices). Clear Collection wipes everything with a confirmation prompt.
-
-The exported JSON looks like this:
-
-json
+```js
 {
-  "exported": "2026-04-06T...",
-  "totalCards": 42,
-  "setProgress": [
-    { "set": "Surging Sparks", "owned": 12, "total": 191, "percent": 6 }
-  ],
-  "cards": [ { "name": "Pikachu", "number": "67", ... } ]
+  id, name, set, setName, number, rarity,
+  dexNumber,   // null for Trainer/Energy, number for Pokémon, undefined = needs migration
+  generation,  // 1–9 or null
+  added        // timestamp
 }
-I also snuck in a few other upgrades — Sun & Moon sets are now included, and clicking a set in the Sets tab jumps straight to Browse filtered to that set.
+```
 
+## JSON export format
 
-Pokemon collector
-Code · HTML 
-Can you also add stats for the various generations of Pokémon from https://en.wikipedia.org/wiki/List_of_Pok%C3%A9mon ? Make sure the JSON format remains compatible
+Exported file is backward-compatible — old importers ignore unknown top-level keys:
 
-7 Apr
+```json
+{
+  "exported": "<ISO timestamp>",
+  "totalCards": 42,
+  "setProgress":       [{ "set": "...", "owned": 12, "total": 191, "percent": 6 }],
+  "generationStats":   [{ "gen": 1, "species": 5, "totalCards": 7, "variants": 2 }],
+  "cards": [{ "id": "...", "name": "...", ... }]
+}
+```
 
-Architected generation tracking system with API integration and backward compatibility
-Architected generation tracking system with API integration and backward compatibility
-Got all the generation data. Now I'll rebuild the full HTML with a new Generations tab, mapping each card to its generation via the Pokédex number from the API. The JSON export will gain a generationStats block while staying fully backward-compatible.
+Keep this format stable. New top-level keys are fine; removing or renaming existing ones is a breaking change.
 
+## Key design constraints
 
-Created 2 files, ran a command, read a file
-Created 2 files, ran a command, read a file
-Here's the updated file! Here's what's new:
-
-🏆 New Generations tab showing all 9 generations pulled from the Wikipedia page you linked, with accurate counts (Gen I: 151, Gen II: 100, Gen III: 135, etc.). Each generation card shows:
-
-The region name, games, years, and Pokédex number range
-A progress bar counting unique species owned (so 3 different Pikachu cards still counts as 1 species)
-A chip showing how many total cards you own from that gen, plus how many are variants
-Trophy/star/sparkle icons as milestones
-How generation detection works: when a card is added via Browse, the app now fetches its nationalPokedexNumbers from the TCG API. It uses that to map the card to a generation using the Wikipedia dex ranges. Trainer and Energy cards have no Pokédex number, so they only appear in the Sets tab.
-
-JSON stays compatible — all existing card fields are unchanged. The export just gains a new generationStats block alongside the existing setProgress one, which old importers will safely ignore. The header subtitle also now shows both cards and unique species count at a glance.
-
-
-Pokemon collector
-Code · HTML 
-There seems to be a bug; I have 61 cards registered but the generations stats are showing zero. Is it not looking up the generations for existing cards?
-
-7 Apr
-
-Diagnosed missing data and devised batch lookup migration solution
-Diagnosed missing data and devised batch lookup migration solution
-Yes, exactly — cards saved before this update have dexNumber: null because the old code never fetched that field. I need to add a one-time migration that looks up the missing Pokédex numbers for existing cards on startup.
-
-
-Architected migration strategy to backfill missing card data
-Architected migration strategy to backfill missing card data
-Now I have a clear picture. I'll add a migration useEffect that runs once on startup, finds any card where dexNumber is undefined (the field simply didn't exist in old saves), fetches their data from the API in batches of 20, and backfills the generation info.
-
-
-Add batch migration helper above the App component
-Add batch migration helper above the App component
-Now add the migration useEffect and a migrating state inside App, right after the existing save effect:
-
-
-Edited 2 files
-Edited 2 files
-Now show the migrating indicator in the Gens tab header:
-
-
-Ran 4 commands, edited 2 files, viewed 2 files
-Ran 4 commands, edited 2 files, viewed 2 files
-All three pieces are in place. Let me do a final sanity check on the migration block:
-
-
-Verify the full migration useEffect
-Verify the full migration useEffect
-Looks great. Let me present the updated file:
-
-
-Presented file
-Presented file
-Here's the fix! The root cause was exactly what you suspected — the 61 existing cards were saved before the dexNumber field existed, so they had no generation data at all.
-
-Here's what the fix does:
-
-On startup, the app checks for any card where dexNumber is undefined (the telltale sign of an old save). It then fetches those cards from the TCG API in batches of 20, retrieves their National Pokédex numbers, maps them to a generation, and saves them back into localStorage — permanently. Next time you open the app, the migration won't run again because all cards will have the field set.
-
-While it's working, a small spinning Pokéball banner appears on the Gens tab. For 61 cards that's 3–4 API calls, so it should complete in a couple of seconds.
-
-One thing to note: Trainer and Energy cards genuinely have no Pokédex number — they'll get dexNumber: null stored, which means they're correctly excluded from generation counts but won't be re-fetched on future loads.
-
-
-Pokemon collector
-Code · HTML 
+- **Mobile-first**: max-width 480px, large tap targets, sticky header + tabbar.
+- **No API key required**: the Pokémon TCG API (`api.pokemontcg.io/v2`) works unauthenticated (rate-limited but sufficient).
+- **No Trainer/Energy dex numbers**: these cards have no `nationalPokedexNumbers`; store `dexNumber: null` so the migration won't re-fetch them.
+- **Generation counts unique species** (not total cards): 3 Pikachu cards = 1 species toward Gen I progress.
